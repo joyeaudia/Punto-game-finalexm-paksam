@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mode Mabar</title>
-  <link rel="stylesheet" href="mabar.css">
+  <link rel="stylesheet" href="mabar.css" />
 </head>
 <body>
 
   <!-- Background -->
-  <img src="mabar.png" alt="Background Mabar" class="full-screen-img">
+  <img src="mabar.png" alt="Background Mabar" class="full-screen-img" />
+
+  <!-- Blur overlay -->
   <div class="blur-overlay"></div>
 
-  <!-- Karakter Guide -->
+  <!-- ===== MABAR CARD (center) ===== -->
+  <div class="mabar-card" id="mabar-card" role="dialog" aria-labelledby="mabar-title" aria-modal="true">
+    <div class="mabar-card-inner">
+      <h2 id="mabar-title">Mabar Bersama Teman</h2>
+      <p class="mabar-sub">Buat room untuk main bareng atau langsung gabung room temanmu.</p>
+
+      <div class="mabar-actions">
+        <button class="btn btn-primary" id="invite-btn" type="button">Undang Teman</button>
+        <button class="btn btn-ghost" id="join-btn" type="button">Join Teman</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Karakter Guide (pojok bawah) -->
   <div class="guide" id="guide">
     <img src="mabartexs.png" alt="Karakter Penjelas" class="guide-char" />
     <div class="speech-bubble">
@@ -20,8 +35,45 @@
     </div>
   </div>
 
-  <!-- Panggil script JS -->
-  <script src="mabar.js"></script>
+  <!-- ===== INVITE / JOIN MODALS ===== -->
+  <!-- Invite Modal -->
+  <div id="invite-modal" class="mabar-modal" aria-hidden="true" role="dialog" aria-labelledby="invite-title">
+    <div class="mabar-modal-inner">
+      <button class="modal-close" id="invite-close" aria-label="Tutup">&times;</button>
+      <h3 id="invite-title">Undang Teman</h3>
+      <p class="modal-desc">Bagikan kode berikut ke temanmu. Mereka dapat masuk menggunakan kode ini.</p>
 
+      <div class="invite-code-wrap">
+        <span id="invite-code" class="invite-code">000000</span>
+        <button id="copy-code-btn" class="btn btn-small">Salin Nomor</button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="invite-go-room" class="btn btn-primary">Lanjut ke Room</button>
+        <button id="invite-close2" class="btn btn-ghost">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Modal -->
+  <div id="join-modal" class="mabar-modal" aria-hidden="true" role="dialog" aria-labelledby="join-title">
+    <div class="mabar-modal-inner">
+      <button class="modal-close" id="join-close" aria-label="Tutup">&times;</button>
+      <h3 id="join-title">Gabung Room</h3>
+      <p class="modal-desc">Masukkan kode undangan 6 digit yang diberikan temanmu.</p>
+
+      <div class="join-input-wrap">
+        <input id="join-code-input" class="join-code-input" type="text" inputmode="numeric" maxlength="6" placeholder="e.g. 839102" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="join-go" class="btn btn-primary">Masuk Ruangan</button>
+        <button id="join-close2" class="btn btn-ghost">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS (pastikan mabar.js berisi logika yang kita susun sebelumnya) -->
+  <script src="mabar.js"></script>
 </body>
 </html>
