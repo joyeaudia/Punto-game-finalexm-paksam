@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Right Aligned Glass</title>
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <!-- logo besar di kiri -->
+  <img class="logo-left" src="logo.png" alt="Logo SweetMind" />
+
+  <div class="split-root">
+    <div class="left-panel" aria-hidden="true"></div>
+
+    <div class="right-panel">
+      <div class="login-card">
+        <h1 class="login-title">Login</h1>
+
+        <form id="loginForm" autocomplete="off">
+          <label>
+            <span>Nama</span>
+            <input type="text" name="username" placeholder="Masukkan nama kamu" required />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" placeholder="Masukkan password" required />
+          </label>
+
+          <button type="button" class="btn" onclick="window.location.href='utama.html'">Masuk</button>
+
+
+          <div class="form-footer">
+            <p class="signup-text">Belum Punya Akun? <a href="sinup.html" class="signup-link">singup</a></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✨ Custom Cursor -->
+  <div id="customCursor" aria-hidden="true">
+    <img src="krusor1.png" alt="cursor" />
+  </div>
+<!-- AUDIO (login.html) -->
+<audio id="bgm" src="tess1.mp3" preload="auto" loop></audio>
+
+  <script src="login.js"></script>
+</body>
+</html>

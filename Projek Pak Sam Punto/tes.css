@@ -1,0 +1,799 @@
+/* ---------------------------
+   Punto — Structured stylesheet
+   --------------------------- */
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg-body:#0f1724;
+
+   --board-bg: rgba(239, 168, 192, 0.614); /* pink muda transparan */
+  --cell-bg: rgba(255, 255, 255, 0.45);
+  --cell-hover: rgba(255, 200, 200, 0.856);
+  --center-cell-bg: rgba(252, 167, 191, 0.55);
+
+  /* panel background removed (fully transparent) */
+--panel-bg: transparent;
+/* remove panel shadow */
+--panel-shadow: none;
+
+
+  --accent-blue-1:#f4a7d1;
+  --accent-blue-2:#f9a2cb;
+  --red-1:#e74c3c;
+  --red-2:#92d2ee;
+  --yellow-1:#f1c40f;
+  --yellow-2:#f39c12;
+  --green-1:#2ecc71;
+  --green-2:#27ae60;
+
+  --font-sans:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --max-width:1200px;
+  --board-max-width:640px;
+  --gap:12px;
+
+  --card-shadow:0 2px 5px rgba(0,0,0,0.3);
+  --muted-text:#d1d5db;
+  --gold:rgba(255,215,0,0.12);
+}
+
+html,body{height:100%}
+
+
+.container{max-width:var(--max-width);margin:0 auto}
+header{ text-align:center;margin-bottom:20px;padding:15px;background:var(--panel-bg);border-radius:10px;box-shadow:var(--panel-shadow); }
+h1{font-size:2.2rem;text-shadow:2px 2px 4px rgba(0,0,0,0.5)}
+.container {
+  margin-top: 90px; /* menambah ruang di atas seluruh kontainer */
+}
+
+.game-info{ display:flex;justify-content:space-between;gap:12px;margin-bottom:20px;background:var(--panel-bg);padding:15px;border-radius:10px;align-items:start;flex-wrap:wrap; }
+.player-info{ flex:1 1 0; min-width:140px; display:flex; flex-direction:column; align-items:center; padding:10px; border-radius:8px; transition:all .25s }
+.player-info.current-player{ box-shadow:0 0 0 3px gold; background:var(--gold) }
+.player-name{ font-weight:700; margin-bottom:10px; font-size:1.05rem }
+.player-cards{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+
+.game-area{ display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap }
+.board-container{ flex:3 1 640px; background:var(--panel-bg); padding:15px; border-radius:10px; min-width:320px }
+.controls{ flex:1 1 260px; background:var(--panel-bg); padding:15px; border-radius:10px; display:flex; flex-direction:column; gap:20px; justify-content:space-between; min-width:220px }
+
+.board{ display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr); gap:2px; background:var(--board-bg); padding:10px; border-radius:5px; margin:0 auto; max-width:var(--board-max-width); width:100%; }
+.cell{ aspect-ratio:1/1; background:var(--cell-bg); border-radius:3px; display:flex; align-items:center; justify-content:center; font-weight:700; cursor:pointer; transition:transform .12s ease, background .12s ease; position:relative; color:inherit; }
+.cell:hover{ background:var(--cell-hover); transform:scale(1.04) }
+.cell.occupied{ cursor:default; transform:none }
+.cell.occupied:hover{ background:var(--cell-bg); transform:none }
+.cell.center-cell{ background:var(--center-cell-bg); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.5) }
+
+.card{ width:100%; height:100%; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; box-shadow:var(--card-shadow); font-weight:800 }
+.card.red{ background:linear-gradient(135deg,var(--red-1),var(--red-2)); color:#fff }
+.card.blue{ background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:#fff }
+.card.yellow{ background:linear-gradient(135deg,var(--yellow-1),var(--yellow-2)); color:#222 }
+.card.green{ background:linear-gradient(135deg,var(--green-1),var(--green-2)); color:#fff }
+
+.player-card{ width:50px; height:50px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; cursor:pointer; box-shadow:0 3px 6px rgba(0,0,0,0.28); transition:transform .18s ease, box-shadow .18s ease; font-size:1.05rem }
+.player-card.red{ background:linear-gradient(135deg,var(--red-1),var(--red-2)); color:#fff }
+.player-card.blue{ background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:#fff }
+.player-card.yellow{ background:linear-gradient(135deg,var(--yellow-1),var(--yellow-2)); color:#222 }
+.player-card.green{ background:linear-gradient(135deg,var(--green-1),var(--green-2)); color:#fff }
+.player-card:hover{ transform:translateY(-5px); box-shadow:0 6px 14px rgba(0,0,0,0.36) }
+.player-card.selected{ transform:translateY(-10px); box-shadow:0 0 18px gold }
+.selected-card-info .player-card{ margin:10px auto; width:60px; height:60px; font-size:1.25rem }
+
+.controls-buttons{ display:flex; flex-direction:column; gap:10px; margin-top:auto }
+.undo-redo-buttons{ display:flex; gap:10px }
+.undo-redo-buttons button{ flex:1 }
+button{ padding:12px 20px; background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:white; border:none; border-radius:6px; cursor:pointer; font-size:1rem; font-weight:700; transition:transform .18s ease, box-shadow .18s ease; box-shadow:0 3px 6px rgba(0,0,0,0.22) }
+button:hover{ transform:translateY(-2px); box-shadow:0 6px 12px rgba(0,0,0,0.28) }
+button:active{ transform:translateY(0) }
+button:disabled{ background:#878b8b; cursor:not-allowed; transform:none; box-shadow:0 3px 6px rgba(0,0,0,0.18) }
+
+.rules{ background:var(--panel-bg); padding:15px; border-radius:10px; margin-top:12px; transition:all .25s ease; display:none }
+.rules h2{ margin-bottom:10px }
+.rules ul{ list-style-position:inside; margin-left:10px }
+.rules li{ margin-bottom:8px; color:var(--muted-text) }
+
+.winning-cells{ animation:pulse 1.5s infinite }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(255,215,0,0.7) } 70%{ box-shadow:0 0 0 10px rgba(255,215,0,0) } 100%{ box-shadow:0 0 0 0 rgba(255,215,0,0) } }
+
+@media (max-width:980px){ .game-info{ flex-direction:column } .game-area{ flex-direction:column } .board-container,.controls{ width:100% } .board{ max-width:480px } }
+@media (max-width:420px){ h1{ font-size:1.6rem } .player-card{ width:44px; height:44px; font-size:.95rem } .card{ font-size:1rem } }
+
+/* ===== Board cards: sedikit mengecil & centered (keep what you liked) ===== */
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;   /* center vertically so image sits nicely */
+  justify-content: center;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* board image: contained, agak besar tapi tidak melebihi kotak */
+.card img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 76%;        /* tweak ini untuk ukuran di board */
+  height: auto;
+  max-height: 86%;   /* prevents overlapping the badge */
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* board badge (bottom center) */
+.card .card-number {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #da9595;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-shadow: none;
+}
+
+/* ===== Player-hand cards: show full image body (no crop) ===== */
+.player-card {
+  position: relative;
+  width: 56px;    /* you can increase/decrease this to change visible size */
+  height: 56px;
+  border-radius: 6px;
+  overflow: visible;   /* allow image to occupy more visually if needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform 0.14s ease;
+}
+
+/* player image: contain but allowed to use more vertical space so full body visible */
+.player-card img {
+  position: relative;
+  width: 86%;      /* main control: how big the image looks in hand */
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* badge for hand: slightly lower and smaller so it doesn't overlap body */
+.player-card .card-number {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #d32f2f;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-shadow: none;
+}
+
+/* small hover for affordance */
+.player-card:hover { transform: translateY(-3px) scale(1.03); }
+
+/* remove color fallbacks so images always visible */
+.card.red, .player-card.red,
+.card.blue, .player-card.blue,
+.card.yellow, .player-card.yellow,
+.card.green, .player-card.green {
+  background: transparent !important;
+}
+/* === Spesial ukuran gambar per player === */
+/* === Ukuran gambar khusus per player di area tangan (hand area) === */
+
+/* 🔴 Player 1 — sedikit lebih besar dari default */
+#player1-cards .player-card img {
+  width: 100%;   /* sedikit lebih besar dari default (86%) */
+  height: auto;
+  transform: translate(-2%, -2%);
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* 🔵 Player 2 — perbesar lebih banyak */
+#player2-cards .player-card img {
+  width: 115%;
+  height: auto;
+  transform: translate(-7%, -6%);
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* 🟡 Player 3 — sedikit lebih besar dari default */
+#player3-cards .player-card img {
+  width: 150%;
+  height: auto;
+  transform: translate(-2%, -2%);
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* 🟢 Player 4 — perbesar lebih banyak */
+#player4-cards .player-card img {
+  width: 150%;
+  height: auto;
+  transform: translate(-7%, -6%);
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* pastikan semua bisa keluar dari frame kartu */
+#player1-cards .player-card,
+#player2-cards .player-card,
+#player3-cards .player-card,
+#player4-cards .player-card {
+  overflow: visible;
+}
+
+/* 🌆 Background utama */
+body {
+  background: url("gmbg.png") no-repeat center center fixed;
+  background-size: cover; /* biar menyesuaikan layar */
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+
+
+/* 🌆 Background utama */
+body {
+  background: url("gmbg.png") no-repeat center center fixed;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("gmbg2.png") no-repeat center center;
+  background-size: 2010px; /* atau cover, tergantung ukuran gambar */
+  background-position: center -190px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 1; /* 🔥 tampil penuh jelas */
+  animation: bgBeat 10s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* 💫 Versi baru — beat lembut, tapi tetap terang */
+@keyframes bgBeat {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;     /* tetap jelas penuh */
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.92;  /* sedikit lebih redup aja */
+  }
+}
+
+/* ---------- Layout players di controls: 2x2 grid ---------- */
+.controls .game-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 kolom */
+  grid-auto-rows: auto;
+  gap: 10px;
+  justify-items: center;
+  align-items: start;
+  margin-bottom: 14px; /* space between players grid and rest controls */
+  width: 100%;
+  padding: 6px 4px; /* opsional, beri sedikit padding */
+  box-sizing: border-box;
+  background: transparent; /* pastikan transparan jika ingin background candy terlihat */
+}
+
+/* kustom ukuran tiap player box agar seragam di controls (ubah sesuai selera) */
+.controls .player-info {
+  flex: none;                 /* hentikan behavior flex dari .player-info */
+  width: 125px;               /* lebar box pemain */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02); /* sangat ringan, opsional */
+  box-shadow: none;
+}
+
+/* kecilkan font nama di area controls supaya muat */
+.controls .player-name {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+/* Pastikan .player-cards tetap bekerja */
+.controls .player-cards { gap: 6px; justify-content:center; }
+
+/* ---------- Geser board sedikit ke kiri ---------- */
+/* Atur variabel shift sesuai kebutuhan, nilai negatif menggeser ke kiri */
+:root {
+  --board-shift: -200px; /* geser ke kiri */
+  --board-lift: 45px;   /* geser ke bawah (+) — kalau mau ke atas pakai nilai negatif */
+}
+
+
+.board-container {
+  transform: translate(var(--board-shift), var(--board-lift));
+  transition: transform .25s ease;
+}
+
+
+/* Jika layout jadi terlalu melebar di layar kecil, kembalikan transform */
+@media (max-width:1100px){
+  .board-container { transform: translateX(0); } /* disable shift di layar kecil */
+}
+
+/* 🌟 Geser posisi semua pemain ke kiri */
+.controls .game-info {
+  transform: translate(-300px, 100px); /* X = kiri/kanan, Y = atas/bawah */
+  transition: transform 0.3s ease;
+}
+
+#rules-btn {
+  display: none !important;
+}
+
+
+/* ===== Separation: players tetap, controls dipindahkan ke .controls-panel ===== */
+.controls {
+  position: relative;
+}
+
+/* Wrapper baru: geser hanya controls-panel (sesuaikan nilai translate) */
+
+
+/* spacing untuk tiap blok di controls-panel */
+.controls .controls-panel > div {
+  margin-bottom: 12px;
+}
+
+/* Pastikan elemen pemain tidak ikut transform */
+.controls .player-info,
+.controls .player-cards,
+.controls .player-name {
+  transform: none !important;
+}
+
+/* Responsive safety: reset transform di layar kecil */
+@media (max-width:980px) {
+  .controls .controls-panel { transform: none !important; max-width: none; }
+}
+
+.controls .controls-panel {
+  transform: translate(54px, -420px) !important;
+  transition: transform 0.22s ease;
+  max-width: 300px;
+  box-sizing: border-box;
+  z-index: 3;
+
+
+
+  /* 🌟 Tambahkan efek transparan & blur */
+  background: rgba(255, 255, 255, 0.12); /* semi transparan putih */
+  backdrop-filter: blur(10px);           /* efek blur belakang */
+  -webkit-backdrop-filter: blur(10px);   /* dukungan Safari */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  padding: 16px;
+}
+
+
+
+/* === BUTTON STYLE SWITCHER === */
+
+/* 🌸 Default soft glass pink (Option 1 baseline) */
+button {
+  background: rgba(255, 140, 160, 0.25);
+  color: #fff;
+  border: 1px solid rgba(255, 110, 150, 0.75);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 80;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.35s ease;
+  
+  /* ✨ Efek glow halus */
+  box-shadow:
+    0 0 8px rgba(255, 110, 150, 0.35),
+    0 0 16px rgba(255, 120, 160, 0.25),
+    inset 0 0 6px rgba(255, 180, 200, 0.2);
+}
+
+/* Hover: lebih terang & agak besar glow-nya */
+button:hover {
+  background: rgba(255, 140, 160, 0.35);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 0 12px rgba(255, 120, 160, 0.55),
+    0 0 30px rgba(255, 140, 180, 0.45),
+    inset 0 0 8px rgba(255, 180, 200, 0.25);
+}
+
+/* Klik animasi */
+button:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 0 8px rgba(255, 120, 160, 0.4),
+    0 0 16px rgba(255, 120, 160, 0.25);
+}
+
+/* Disabled */
+button:disabled {
+  background: rgba(255, 140, 160, 0.1);
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255, 140, 160, 0.35);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+
+/* -- GENERAL BUTTON BASE STYLE -- */
+.controls-panel button {
+  color: #e769a4;
+  padding: 12px 22px;
+  font-weight: 800;
+  font-size: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.35s ease;
+}
+
+/* 🌹 Play vs Computer — Coral Pink */
+#start-pvc {
+  background: rgba(255, 140, 160, 0.28);
+  border: 1px solid rgba(255, 110, 150, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 120, 160, 0.45),
+    0 0 25px rgba(255, 120, 160, 0.3);
+}
+#start-pvc:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 0 18px rgba(255, 150, 180, 0.55),
+    0 0 35px rgba(255, 150, 180, 0.45);
+}
+
+/* 🍒 Stop AI Mode — Cherry Red */
+#stop-pvc {
+  background: rgba(225, 70, 90, 0.32);
+  border: 1px solid rgba(255, 100, 100, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 85, 85, 0.45),
+    0 0 24px rgba(255, 85, 85, 0.32);
+}
+#stop-pvc:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow:
+    0 0 18px rgba(255, 110, 110, 0.65),
+    0 0 36px rgba(255, 110, 110, 0.45);
+}
+
+/* 🩵 Undo — Cool Blue */
+#undo-btn {
+  background: rgba(150, 200, 255, 0.25);
+  border: 1px solid rgba(100, 170, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(100, 170, 255, 0.45),
+    0 0 22px rgba(100, 170, 255, 0.3);
+}
+#undo-btn:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 18px rgba(120, 185, 255, 0.55),
+    0 0 32px rgba(120, 185, 255, 0.45);
+}
+
+/* 💚 Redo — Emerald Green */
+#redo-btn {
+  background: rgba(120, 255, 180, 0.25);
+  border: 1px solid rgba(80, 240, 150, 0.75);
+  box-shadow:
+    0 0 10px rgba(80, 240, 150, 0.45),
+    0 0 22px rgba(80, 240, 150, 0.3);
+}
+#redo-btn:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 18px rgba(100, 255, 170, 0.55),
+    0 0 32px rgba(100, 255, 170, 0.45);
+}
+
+/* 💛 Reset Game — Golden Honey */
+#start-restart-game {
+  background: rgba(255, 230, 150, 0.28);
+  border: 1px solid rgba(255, 200, 90, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 200, 90, 0.45),
+    0 0 22px rgba(255, 200, 90, 0.3);
+}
+#start-restart-game:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 0 18px rgba(255, 215, 110, 0.6),
+    0 0 36px rgba(255, 215, 110, 0.45);
+}
+
+/* Disabled look */
+button:disabled {
+  opacity: .5;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+
+/* ====== Panel headings yang lebih cakep ====== */
+.controls .controls-panel h3 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  font-weight: 900;
+  background: linear-gradient(90deg,#a44063,#000000);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Garis pemisah tipis lembut tiap blok */
+.controls .controls-panel > div {
+  padding: 6px 0 10px;
+  border-bottom: 1px dashed rgba(255,255,255,0.18);
+}
+.controls .controls-panel > div:last-child { border-bottom: 0; }
+
+/* ====== Selected Card placeholder elegan ====== */
+#selected-card-display {
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255, 200, 215, 0.35);
+  border-radius: 12px;
+  padding: 6px;
+  background: rgba(255,255,255,0.05);
+}
+#selected-card-display:empty::before {
+  content: "Belum ada kartu terpilih";
+  font-size: .85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Kalau ada kartu, hilangkan border & bg placeholder (wrapper .player-card sudah ada) */
+#selected-card-display:has(.player-card) {
+  border: 0;
+  background: transparent;
+  min-height: 0;
+}
+
+/* ====== Status giliran jadi pill berwarna ====== */
+#current-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .3px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+/* titik kecil warna di depan teks */
+#current-player::before{
+  content:"";
+  width:10px;height:10px;border-radius:50%;
+  box-shadow:0 0 10px currentColor;
+}
+
+/* varian warna berdasarkan kelas (ditambah via JS di bawah) */
+.status-red   { color:#ff7b86; border-color: rgba(255,123,134,.45); background: rgba(255,123,134,.12); }
+.status-blue  { color:#7ebfff; border-color: rgba(126,191,255,.45); background: rgba(126,191,255,.10); }
+.status-yellow{ color:#ffd66b; border-color: rgba(255,214,107,.45); background: rgba(255,214,107,.10); }
+.status-green { color:#6cf2b0; border-color: rgba(108,242,176,.45); background: rgba(108,242,176,.10); }
+
+/* ====== AI Players: checkbox -> chip toggle ====== */
+.ai-controls .ai-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ai-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  font-size: .9rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+}
+.ai-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.ai-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+
+/* indikator bulat */
+.ai-toggle .dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+  transition: background .2s ease, box-shadow .2s ease;
+}
+
+/* warna sesuai pemain saat checked */
+.ai-red    input:checked ~ .dot { background:#ff7b86; box-shadow: 0 0 10px #ff7b86; }
+.ai-blue   input:checked ~ .dot { background:#7ebfff; box-shadow: 0 0 10px #7ebfff; }
+.ai-yellow input:checked ~ .dot { background:#ffd66b; box-shadow: 0 0 10px #ffd66b; }
+.ai-green  input:checked ~ .dot { background:#6cf2b0; box-shadow: 0 0 10px #6cf2b0; }
+
+/* chip ikut menyala saat aktif */
+.ai-toggle input:checked ~ span.label {
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.2);
+}
+.ai-red    input:checked ~ .label { border-color: rgba(255,123,134,.6); }
+.ai-blue   input:checked ~ .label { border-color: rgba(126,191,255,.6); }
+.ai-yellow input:checked ~ .label { border-color: rgba(255,214,107,.6); }
+.ai-green  input:checked ~ .label { border-color: rgba(108,242,176,.6); }
+
+/* label teks di dalam chip */
+.ai-toggle .label {
+  border-left: 1px dashed rgba(255,255,255,.22);
+  padding-left: 8px;
+  color: rgba(255,255,255,.9);
+}
+
+/* teks bantuan lebih rapi */
+.ai-controls small {
+  display:block;
+  margin-top:6px;
+  font-size:.8rem;
+  color: rgba(188, 18, 111, 0.95);
+}
+
+
+/* 🔎 Hand cards bigger — board tetap sama */
+.player-cards .player-card{
+  width: 59px;          /* dari 56px → 78px */
+  height: 78px;
+  border-radius: 10px;
+}
+.player-cards .player-card img{
+  width: 92%;           /* biar gambar ikut gede, tapi masih rapi */
+  max-height: 100%;
+}
+
+/* Hover biar terasa “ambil” */
+.player-cards .player-card:hover{
+  transform: translateY(-4px) scale(1.04);
+}
+
+/* Selected card preview (panel atas) tetap ukuran sedang */
+#selected-card-display .player-card{
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+}
+#selected-card-display .player-card img{ width: 90%; }
+
+/* Responsif: kecilkan lagi di layar sempit */
+@media (max-width: 980px){
+  .player-cards .player-card{ width: 64px; height: 64px; }
+}
+
+
+html, body {
+  height: 100vh;
+  overflow: hidden;          /* kunci vertical & horizontal */
+  overscroll-behavior: none; /* hilangkan bounce di mobile */
+}
+
+
+/* Board card number — move to bottom (cute badge) */
+/* Board card number — bottom left badge */
+.card .card-number {
+  position: absolute;
+  bottom: -6px;          /* sedikit keluar */
+  left: -6px;            /* geser ke kiri */
+  transform: none;       /* hilangkan centering */
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ff3a52 !important;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 3px 7px;
+  border-radius: 10px;
+  text-shadow: 0 0 4px rgba(255,90,120,0.45);
+  z-index: 10;
+}
+
+/* Hand card number — cute bubble badge bottom center */
+.player-card .card-number {
+  position: absolute;
+  bottom: -5px; /* sedikit keluar */
+  left: 50%;
+  transform: translateX(-50%);
+  
+  font-size: 0.9rem; /* lebih kecil dari board */
+  font-weight: 900;
+  color: #ff3a52 !important;
+  
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 6px;
+  border-radius: 10px;
+  
+  text-shadow: 0 0 3px rgba(255,90,120,0.45);
+  z-index: 10;
+}
+
+
+/* ===== Custom cursor (PNG) ===== */
+html.custom-cursor-active, body.custom-cursor-active { cursor: none !important; }
+
+#customCursor{
+  position: fixed;
+  left: 0; top: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 99999;
+  transition: transform 0.05s linear, opacity 0.12s linear;
+  opacity: 0; /* muncul saat mouse bergerak */
+  will-change: transform, opacity;
+}
+#customCursor img{
+  width: 48px;  /* ubah 36–60 sesuai selera */
+  height: auto;
+  user-select: none;
+  display: block;
+}
+#customCursor.click img{ transform: scale(0.9); }
+
+/* Sembunyikan custom cursor pada device sentuh */
+@media (pointer: coarse){
+  #customCursor{ display:none !important; }
+  html.custom-cursor-active, body.custom-cursor-active { cursor:auto !important; }
+}
+

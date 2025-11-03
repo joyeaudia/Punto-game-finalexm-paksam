@@ -1,0 +1,562 @@
+/* Reset bawaan */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Pastikan body dan html menempati seluruh viewport */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Gambar utama full-screen */
+.full-screen-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Gambar kedua (bg3.png) di tengah layar */
+:root {
+  --ukuran: 2038px;
+  --offset-y: 10%; /* atur seberapa jauh turun */
+}
+
+.center-img {
+  position: absolute;
+  top: calc(50% + var(--offset-y));
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--ukuran);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+:root {
+  --ukuran: 2038px;
+  --offset-y: 10%; /* untuk bg3 */
+  --ukuran-belakang: 330px;
+  --offset-x-belakang: -120px; /* geser kiri(-) / kanan(+) */
+  --offset-y-belakang: -150px; /* geser atas(-) / bawah(+) */
+}
+
+/* Animasi naik turun pelan */
+@keyframes float {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+
+  /* 🔽 BAGIAN INI nih yang kamu ubah untuk bikin gerakannya lebih terasa */
+  50% {
+    transform: translate(-50%, -50%) translateY(-5px);
+    /* ubah -1px jadi lebih besar misalnya:
+       -20px  → gerak pelan tapi lebih jauh
+       -60px  → lebih energik, terlihat jelas naik-turun
+    */
+  }
+}
+
+/* Tambahkan animasi ke at1.png */
+.back-center-img {
+  position: absolute;
+  top: calc(50% + var(--offset-y-belakang));
+  left: calc(50% + var(--offset-x-belakang));
+  transform: translate(-50%, -50%);
+  width: var(--ukuran-belakang);
+  z-index: 0;
+  opacity: 0.9;
+
+  /* 🔽 BAGIAN INI juga bisa kamu ubah untuk kontrol kecepatannya */
+  animation: float 3s ease-in-out infinite;
+  /* ubah 3s → 2s  = lebih cepat dan energik
+     ubah 3s → 6s  = lebih lambat dan halus
+     ubah ease-in-out → cubic-bezier(.55,.05,.68,.19) = lebih “memantul” */
+}
+
+/* Pastikan bg3 di atas at1 */
+.center-img {
+  z-index: 1;
+}
+:root{
+  /* BG4 */
+  --side-width: 150px;
+  --side-right-gap: 0px;
+  --side-translate-x: 0px;
+  --side-offset-y: -200px;
+  --side-z: 0;
+   --side2-z: -1;
+
+  /* BG2 (side2) — letakkan sedikit lebih ke kiri dari bg4 dengan translateX negatif */
+  --side2-width: 800px;
+  --side2-right-gap: 130px;          /* jarak dari kanan viewport (ubah) */
+  --side2-translate-x: -40px;      /* geser ke kiri relatif dari right-gap */
+  --side2-offset-y: -350px;        /* naik/turun relatif (coba nilai mendekati bg4) */
+  --side2-z: 0;                    /* pastikan tampil di atas/bg4 kalau perlu */
+  /* animasi kanan-kiri */
+  --side2-sway-distance: 40px;     /* jarak ke kanan dari posisi awal */
+  --side2-duration: 3.5s;
+}
+
+/* wrapper untuk bg4 */
+.side-wrap {
+  position: absolute;
+  right: var(--side-right-gap);
+  top: calc(50% + var(--side-offset-y));
+  transform: translateY(-50%);
+  z-index: var(--side-z);
+  pointer-events: none;
+}
+
+/* gambar bg4 tetap pakai floating kecil (jika mau) */
+.side-wrap img.side-img {
+  display: block;
+  width: var(--side-width);
+  height: auto;
+  transform: translateX(var(--side-translate-x));
+  animation: side-float 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes side-float {
+  0%   { transform: translateX(var(--side-translate-x)) translateY(0); }
+  50%  { transform: translateX(var(--side-translate-x)) translateY(-12px); }
+  100% { transform: translateX(var(--side-translate-x)) translateY(0); }
+}
+
+/* wrapper untuk bg2/at2 */
+.side2-wrap{
+  position: absolute;
+  right: var(--side2-right-gap);
+  top: calc(50% + var(--side2-offset-y));
+  transform: translateY(-50%);
+  z-index: var(--side2-z);
+  pointer-events: none;
+}
+
+/* gambar bg2 yang bergerak kanan-kiri */
+.side2-wrap img.side2-img {
+  display: block;
+  width: var(--side2-width);
+  height: auto;
+  transform: translateX(var(--side2-translate-x));
+  /* animasi sway: dari posisi awal ke posisi + sway-distance, lalu kembali (alternate) */
+  animation: side2-sway var(--side2-duration) ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* keyframes hanya ubah translateX agar centering tetap aman */
+@keyframes side2-sway {
+  from {
+    transform: translateX(var(--side2-translate-x));
+  }
+  to {
+    transform: translateX(calc(var(--side2-translate-x) + var(--side2-sway-distance)));
+  }
+}
+
+/* debug helper — hapus/disable saat sudah oke */
+.debug {
+  outline: 1px dashed lime;
+}
+
+/* responsif cepat — mengecilkan kalau layar kecil */
+@media (max-width: 480px) {
+  :root {
+    --side-width: 110px;
+    --side2-width: 80px;
+    --side2-sway-distance: 20px;
+  }
+}
+
+/* utama.css - tambahan DP 1..4 (letakkan setelah definisi lain) */
+
+/* ------------------------------------------
+   Variabel global untuk tiap DP (mudah diubah)
+   ------------------------------------------ */
+:root{
+  /* DP1 */
+  --dp1-width: 200px;
+  --dp1-offset-x: 900px;
+  --dp1-offset-y: 380px;
+  --dp1-z: 1.2;
+  --dp1-glow: rgba(180, 210, 255, 0.35);
+  --dp1-z: 2;
+
+
+/* DP2 */
+--dp2-width: 100px;
+--dp2-offset-x: 400px;
+--dp2-offset-y: 300px;
+--dp2-z: 2;
+--dp2-glow: rgb(238, 243, 146); /* ✨ warna keemasan terang */
+
+  /* DP3 */
+  --dp3-width: 295px;
+  --dp3-offset-x: -325px;
+  --dp3-offset-y: 240px;
+  --dp3-z: 2;
+  --dp3-glow: rgba(249, 222, 249, 0.826);
+
+  /* DP4 (paling depan) */
+/* di :root — DP4 */
+--dp4-width: 150px;
+--dp4-offset-x: -810px;
+--dp4-offset-y: 5px;
+--dp4-z: 2;
+--dp4-glow: rgba(244, 191, 87, 0.849); /* warna keemasan terang */
+
+
+  /* Animasi control (jika mau tweak global) */
+  --dp-breath-duration: 5s;
+  --dp-glow-duration: 3s;
+  
+}
+
+/* ------------------------------------------
+   Base class untuk semua DP supaya konsisten
+   ------------------------------------------ */
+.dp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  will-change: transform, filter;
+  /* kombinasi animasi: breath (scale) + glow (filter) */
+  animation: dp-breath var(--dp-breath-duration) ease-in-out infinite,
+             dp-glow var(--dp-glow-duration) ease-in-out infinite alternate;
+}
+
+/* -------------------------
+   Spesifik tiap DP (ukuran + offset + z)
+   ------------------------- */
+.dp1-img {
+  width: var(--dp1-width);
+  top: calc(50% + var(--dp1-offset-y));
+  left: calc(50% + var(--dp1-offset-x));
+  z-index: var(--dp1-z);
+  filter: drop-shadow(0 0 18px var(--dp1-glow));
+}
+
+.dp2-img {
+  width: var(--dp2-width);
+  top: calc(50% + var(--dp2-offset-y));
+  left: calc(50% + var(--dp2-offset-x));
+  z-index: var(--dp2-z);
+
+  /* ✨ efek glow emas kuat */
+  filter:
+    drop-shadow(0 0 30px rgba(255, 215, 130, 0.9)) /* halo utama */
+    drop-shadow(0 0 60px rgba(255, 200, 90, 0.7))  /* lapisan luar lembut */
+    drop-shadow(0 0 90px rgba(255, 170, 60, 0.5)); /* lapisan jauh, makin lembut */
+
+  animation:
+    dp-breath 5s ease-in-out infinite,
+    dp2-glow-gold 3.5s ease-in-out infinite alternate; /* ✨ denyut cahaya keemasan */
+}
+
+@keyframes dp2-glow-gold {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 30px rgba(255, 215, 130, 0.8))
+      drop-shadow(0 0 60px rgba(255, 200, 90, 0.6))
+      drop-shadow(0 0 90px rgba(255, 170, 60, 0.4));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 45px rgba(255, 225, 150, 1))
+      drop-shadow(0 0 80px rgba(255, 100, 227, 0.735))
+      drop-shadow(0 0 120px rgba(255, 190, 80, 0.6));
+  }
+}
+
+
+
+.dp3-img {
+  width: var(--dp3-width);
+  top: calc(50% + var(--dp3-offset-y));
+  left: calc(50% + var(--dp3-offset-x));
+  z-index: var(--dp3-z);
+  filter: drop-shadow(0 0 22px var(--dp3-glow));
+}
+
+.dp4-img {
+  width: var(--dp4-width);
+  top: calc(50% + var(--dp4-offset-y));
+  left: calc(50% + var(--dp4-offset-x));
+  z-index: var(--dp4-z);
+
+  /* triple drop-shadow untuk efek aura keemasan yang kaya */
+  filter:
+    drop-shadow(0 0 30px rgba(255, 215, 130, 0.9)) /* inner halo */
+    drop-shadow(0 0 60px rgba(255, 200, 90, 0.8))  /* outer glow */
+    drop-shadow(0 0 100px rgba(255, 170, 60, 0.6));/* spread lembut */
+
+  /* Animasi: tetap bernapas + denyut glow khusus dp4 */
+  animation:
+    dp-breath var(--dp-breath-duration) ease-in-out infinite,
+    dp4-glow-gold 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes dp4-glow-gold {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 30px rgba(255, 215, 130, 0.8))
+      drop-shadow(0 0 60px rgba(255, 200, 90, 0.6))
+      drop-shadow(0 0 100px rgba(255, 170, 60, 0.45));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 45px rgba(255, 225, 150, 1))
+      drop-shadow(0 0 90px rgba(255, 210, 100, 0.85))
+      drop-shadow(0 0 140px rgba(255, 190, 80, 0.65));
+  }
+}
+
+
+/* ------------------------------------------
+   Animasi 'bernapas' (scale) dan glow (filter)
+   - dp-breath: scale halus
+   - dp-glow: drop-shadow berubah (denyut)
+   ------------------------------------------ */
+@keyframes dp-breath {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.02);
+    opacity: 0.98;
+  }
+}
+
+
+
+/* -------------------------
+   Responsif sederhana
+   ------------------------- */
+@media (max-width: 480px) {
+  :root{
+    --dp1-width: 220px;
+    --dp2-width: 260px;
+    --dp3-width: 300px;
+    --dp4-width: 260px;
+  }
+}
+/* ===== Popup Sederhana (wlcm -> logo), versi naik + logo besar ===== */
+#intro-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  visibility: hidden;
+}
+
+/* saat tampil */
+#intro-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* gambar intro: sedikit turun awalnya (agar saat 'pop' terlihat naik) */
+#intro-img {
+  max-width: min(80vw, 700px);
+  height: auto;
+  /* awal: sedikit turun dan sedikit kecil */
+  transform: translateY(20px) scale(0.75);
+  opacity: 0;
+  transition: transform 0.6s cubic-bezier(.2,.9,.25,1), opacity 0.45s ease;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+/* saat muncul: naik sedikit dari posisi awal dan normal scale */
+#intro-overlay.visible #intro-img,
+#intro-img.popped {
+  transform: translateY(-100px) scale(1); /* <-- translateY negatif = naik */
+  opacity: 1;
+}
+
+/* saat menghilang */
+#intro-img.hidden,
+#intro-img.fading-out {
+  opacity: 0;
+  transform: translateY(10px) scale(0.85);
+}
+
+/* kelas untuk membuat logo lebih besar lagi */
+#intro-img.logo-large {
+  max-width: min(80vw, 800px); /* lebih kecil */
+  transform: translateY(-70px) scale(1.05); /* lebih kecil dan agak naik */
+}
+
+
+/* Jika prefer-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  #intro-img { transition: none; transform: none; opacity: 1; }
+  #intro-overlay { transition: none; opacity: 1; visibility: visible; }
+}
+
+/* ukuran pada layar kecil */
+@media (max-width: 480px) {
+  #intro-img { max-width: 90vw; }
+  #intro-img.logo-large { max-width: 96vw; transform: translateY(-30px) scale(1.06); }
+}
+
+/* ===== Custom cursor untuk halaman utama ===== */
+html.custom-cursor-active,
+body.custom-cursor-active {
+  cursor: none !important;
+}
+
+#customCursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 99999;
+  transition: transform 0.05s linear, opacity 0.12s linear;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ukuran dasar kursor — ubah sesuai kebutuhan */
+#customCursor img {
+  width: 48px; /* ubah ke 36/40/60 sesuai selera */
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  display: block;
+}
+
+/* saat meng-klik -> sedikit mengecilkan kursor */
+#customCursor.click img {
+  transform: scale(0.9);
+}
+
+/* sembunyikan custom cursor pada device sentuh */
+@media (pointer: coarse) {
+  #customCursor { display: none !important; }
+  html.custom-cursor-active, body.custom-cursor-active { cursor: auto !important; }
+}
+/* ==== GUIDE CHARACTER ==== */
+
+
+/* ===== GUIDE (bubble selalu di atas karakter) ===== */
+:root{
+  /* gampang tweak posisi/ukuran di 1 tempat */
+  --guide-bottom: -40px;   /* posisi karakter dari bawah */
+  --guide-left: 110;     /* posisi karakter dari kiri */
+  --guide-width: 280px;   /* lebar gambar karakter */
+  --bubble-offset-y: 14px; /* jarak bubble dari atas kepala karakter */
+  --bubble-max-width: 360px;
+}
+
+/* container: relative supaya bubble absolute mengacu ke sini */
+.guide {
+  position: absolute;          /* tetap absolute di halaman */
+  bottom: var(--guide-bottom); /* atur posisi keseluruhan dengan ini */
+  left: var(--guide-left);
+  display: block;              /* block supaya mudah handle children absolute */
+  width: calc(var(--guide-width) + 12px); /* lebar container minimal */
+  pointer-events: none;
+  z-index: 1200;               /* pastikan di atas elemen lain */
+}
+
+/* karakter di dalam container */
+.guide-char {
+  display: block;
+  width: var(--guide-width); /* ubah ukuran karakter di sini */
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* bubble tetap di atas kepala */
+.speech-bubble {
+  position: absolute;
+  bottom: calc(100% + var(--bubble-offset-y));
+  left: 10%; /* geser ke kanan sedikit dari tengah karakter */
+  transform-origin: bottom left;
+  background: rgba(255, 105, 180, 0.7);
+  color: #fff;
+  font-weight: bold;
+  border-radius: 18px;
+  padding: 10px 20px;
+  min-width: 180px;
+  max-width: 280px;
+  box-shadow: 0 6px 24px rgba(255, 105, 180, 0.3);
+  font-size: 15px;
+  line-height: 1.5;
+  pointer-events: auto;
+  opacity: 1;
+  backdrop-filter: blur(2px);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  z-index: 5;
+  text-align: left;
+}
+
+/* ✨ Segitiga panah di bawah kanan */
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  right: 30px;   /* jarak dari sisi kanan bubble */
+  bottom: -14px; /* keluar dari bawah bubble */
+  width: 0;
+  height: 0;
+  border-width: 14px 12px 0 12px;
+  border-style: solid;
+  border-color: rgba(255, 105, 180, 0.7) transparent transparent transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
+}
+
+
+/* Responsive tweak: kecilkan bila layar sempit */
+@media (max-width: 480px) {
+  :root {
+    --guide-bottom: 28px;
+    --guide-left: 18px;
+    --guide-width: 140px;
+    --bubble-offset-y: 10px;
+    --bubble-max-width: 260px;
+  }
+}
+
+.dialog-img {
+  display: block;
+  width: 60px;
+  margin: 8px auto 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+/* inline icon ikut ukuran font */
+.inline-icon {
+  display: inline-block;
+  width: 1.1em;        /* ukuran mengikuti tinggi font */
+  height: 1.1em;
+  vertical-align: -0.15em; /* sesuaikan baseline supaya sejajar teks */
+  margin-left: 0.35em;
+  margin-right: 0.15em;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+#play-img {
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease;
+}
+
+#play-img:hover {
+  transform: scale(1.07);
+  filter: brightness(1.15);
+}

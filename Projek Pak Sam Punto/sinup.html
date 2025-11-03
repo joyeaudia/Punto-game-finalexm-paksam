@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signup - SweetMind</title>
+  <link rel="stylesheet" href="sinup.css" />
+</head>
+<body>
+  <!-- logo besar di kiri -->
+  <img class="logo-left" src="logo.png" alt="Logo SweetMind" />
+
+  <div class="split-root">
+    <div class="left-panel" aria-hidden="true"></div>
+
+    <div class="right-panel">
+      <div class="login-card">
+        <h1 class="login-title">Sign Up</h1>
+
+        <form id="signupForm" autocomplete="off">
+          <label>
+            <span>Nama Lengkap</span>
+            <input type="text" name="fullname" placeholder="Masukkan nama lengkap kamu" required />
+          </label>
+
+          <label>
+            <span>Username</span>
+            <input type="text" name="username" placeholder="Masukkan username" required />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" placeholder="Masukkan password" required />
+          </label>
+
+          <label>
+            <span>Konfirmasi Password</span>
+            <input type="password" name="confirmPassword" placeholder="Ulangi password kamu" required />
+          </label>
+
+<button type="button" class="btn" onclick="window.location.href='utama.html'">Daftar</button>
+
+
+          <div class="form-footer">
+            <p class="signup-text">
+              Sudah punya akun? <a href="login.html" class="signup-link">Login</a>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✨ Custom Cursor -->
+  <div id="customCursor" aria-hidden="true">
+    <img src="krusor1.png" alt="cursor" />
+  </div>
+ <!-- AUDIO (login.html) -->
+<audio id="bgm" src="tess.mp3" preload="auto" loop></audio>
+
+  <script src="sinup.js"></script>
+</body>
+</html>

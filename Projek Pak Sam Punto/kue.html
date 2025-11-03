@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Opening - Parallax Cake (final)</title>
+  <link rel="stylesheet" href="kue.css" />
+</head>
+<body>
+  <div class="scene">
+
+    <!-- Confetti container (di dalam scene) -->
+    <div class="confetti-container" aria-hidden="true"></div>
+
+    <!-- Sky fullcover -->
+    <img src="sky.png" alt="sky" class="sky">
+
+    <!-- Clouds di atas -->
+    <img src="clouds.png" alt="clouds" class="clouds">
+
+    <!-- Pohon kiri & kanan -->
+    <img src="pohon1.png" alt="pohon kiri" class="tree left" onerror="this.onerror=null;this.src='trees.png'">
+    <img src="pohon2.png" alt="pohon kanan" class="tree right" onerror="this.onerror=null;this.src='trees.png'">
+
+    <!-- Rocks -->
+    <img src="rocks.png" alt="rocks" class="rocks" onerror="this.style.display='none'">
+
+    <!-- Cake utama (tengah) -->
+    <img src="cake.png" alt="cake" class="cake">
+
+    <!-- Cake kanan & kiri -->
+    <img src="cake3.png" alt="cake kanan" class="cake cake-right" onerror="this.onerror=null;this.style.display='none'">
+    <img src="cake2.png" alt="cake kiri" class="cake cake-left" onerror="this.onerror=null;this.style.display='none'">
+
+    <!-- Ground -->
+    <img src="ground.png" alt="ground" class="ground">
+
+  </div>
+
+  <audio id="bgm" src="tess1.mp3" preload="auto" autoplay muted></audio>
+
+  <!-- LOGO muncul setelah 5 detik -->
+<div id="logoReveal" class="logo-container" aria-hidden="true">
+  <div class="logo-glow"></div>
+  <img src="logo.png" alt="logo" class="logo-image">
+</div>
+
+
+  <!-- ✨ Custom Cursor -->
+  <div id="customCursor" aria-hidden="true">
+    <!-- gambar default kursor -->
+    <img src="krusor1.png" alt="cursor">
+  </div>
+
+  <!-- Panggil file JS terpisah -->
+  <script src="kue.js"></script>
+</body>
+</html>

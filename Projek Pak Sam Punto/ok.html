@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Punto — Player1 pake lompat.png (statik, no flicker)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0f1724;color:#fff;font-family:Segoe UI,system-ui;padding:20px}
+  .wrap{max-width:1100px;margin:0 auto}
+  header{ text-align:center;padding:12px;margin-bottom:12px;background:rgba(255,255,255,0.03);border-radius:8px }
+  h1{font-size:1.4rem}
+  .players{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  .player{flex:1;text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+  .player h3{margin-bottom:8px;font-weight:600}
+  .hand{display:flex;gap:8px;justify-content:center}
+  /* card button */
+  .card-btn{width:56px;height:64px;border-radius:8px;border:0;background:transparent;cursor:pointer;position:relative;padding:0;outline:none}
+  .card-sprite{
+    width:56px;height:56px;border-radius:6px;background-repeat:no-repeat;background-position:0 0;background-size:800% 100%; /* frameCount * 100% ; we leave it to show frame 0 */
+    image-rendering:pixelated;display:block;margin:0 auto;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    background-color: #122; /* fallback */
+  }
+  /* badge bottom */
+  .badge-bottom{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:-6px;
+    width:30px;height:18px;border-radius:6px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:#fff;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,0.5)
+  }
+
+  /* board */
+  .board-wrap{display:flex;justify-content:center;margin:14px 0}
+  .board{width:640px;height:640px;background:#12313a;padding:12px;border-radius:10px;display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+  .cell{background:#274554;border-radius:6px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
+  .cell .placed-wrap{width:86%;height:86%;display:flex;align-items:center;justify-content:center;position:relative}
+  .cell .placed-sprite{width:100%;height:100%;background-repeat:no-repeat;background-position:0 0;background-size:800% 100%;image-rendering:pixelated;border-radius:6px}
+  .cell .placed-badge{position:absolute;left:50%;transform:translateX(-50%);bottom:6%;width:30px;height:18px;border-radius:6px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:12px}
+
+  .controls{ text-align:center;margin-top:10px }
+  button{padding:10px 14px;border-radius:8px;border:0;background:linear-gradient(135deg,#3498db,#2980b9);color:white;cursor:pointer}
+  .note{color:#9fd;margin-top:8px;font-size:13px;text-align:center}
+  /* selected style */
+  .card-btn.selected .card-sprite{box-shadow:0 10px 26px rgba(255,215,0,0.12);outline:3px solid rgba(255,215,0,0.06);border-radius:8px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header><h1>Punto — Semua kartu Player 1 pakai <code>lompat.png</code> (statis, tanpa kedip)</h1></header>
+
+    <div class="players">
+      <div class="player" id="player1"><h3>Player 1</h3><div class="hand" id="hand1"></div></div>
+      <div class="player" id="player2"><h3>Player 2</h3><div class="hand" id="hand2"></div></div>
+      <div class="player" id="player3"><h3>Player 3</h3><div class="hand" id="hand3"></div></div>
+      <div class="player" id="player4"><h3>Player 4</h3><div class="hand" id="hand4"></div></div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn">Start / Restart Game</button>
+      <div class="note">Pastikan file <code>lompat.png</code> ada di folder yang sama. Jika spritesheet punya jumlah frame berbeda, ubah FRAME_COUNT di kode.</div>
+    </div>
+  </div>
+
+<script>
+/* ------------- KONFIGURASI ------------- */
+// file lompat (spritesheet horizontal). Kita akan tunjukkan **frame pertama** saja (statis).
+const PLAYER1_SPRITE = 'Run.png';
+const FRAME_COUNT = 8; // jumlah frame dalam lompat.png (kalau beda, ubah angka ini)
+const FRAME_INDEX_TO_SHOW = 0; // kita pilih frame pertama supaya statis (0-based)
+
+/* ------------- STATE SEDERHANA ------------- */
+const state = {
+  players: [
+    { id:1, color:'red', cards:[], deck:[] },
+    { id:2, color:'blue', cards:[], deck:[] },
+    { id:3, color:'yellow', cards:[], deck:[] },
+    { id:4, color:'green', cards:[], deck:[] }
+  ],
+  board: Array(9).fill().map(()=>Array(9).fill(null)),
+  current: 0,
+  started: false,
+  selected: null // {playerId, cardIndex}
+};
+
+/* ------------- helper ------------- */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+function createDecks(){
+  const decks = { red:[], blue:[], yellow:[], green:[] };
+  for(let set=0;set<2;set++){
+    for(let v=1;v<=9;v++){
+      decks.red.push({value:v, color:'red'});
+      decks.blue.push({value:v, color:'blue'});
+      decks.yellow.push({value:v, color:'yellow'});
+      decks.green.push({value:v, color:'green'});
+    }
+  }
+  return decks;
+}
+
+/* ------------- DOM refs ------------- */
+const handEls = {
+  1: document.getElementById('hand1'),
+  2: document.getElementById('hand2'),
+  3: document.getElementById('hand3'),
+  4: document.getElementById('hand4')
+};
+const boardEl = document.getElementById('board');
+const startBtn = document.getElementById('startBtn');
+
+/* ------------- build board DOM ------------- */
+function buildBoard(){
+  boardEl.innerHTML = '';
+  for(let r=0;r<9;r++){
+    for(let c=0;c<9;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r; cell.dataset.c = c;
+      cell.addEventListener('click', ()=> onCellClick(r,c));
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+/* ------------- render hands ------------- */
+function renderHands(){
+  state.players.forEach(player=>{
+    const el = handEls[player.id];
+    el.innerHTML = '';
+    player.cards.forEach((card, idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'card-btn';
+      btn.dataset.playerId = player.id;
+      btn.dataset.idx = idx;
+
+      if (player.id === 1){
+        // Player1: tampilkan lompat.png frame pertama (STATIS)
+        const spr = document.createElement('div');
+        spr.className = 'card-sprite';
+        // set background-image & background-size so frame selection works
+        spr.style.backgroundImage = `url('${PLAYER1_SPRITE}')`;
+        spr.style.backgroundSize = `${FRAME_COUNT * 100}% 100%`;
+        // calculate percentage offset for selected frame (frame 0)
+        const step = 100 / FRAME_COUNT;
+        const posX = -(FRAME_INDEX_TO_SHOW * step);
+        spr.style.backgroundPosition = `${posX}% 0%`;
+
+        btn.appendChild(spr);
+
+        const badge = document.createElement('div');
+        badge.className = 'badge-bottom';
+        badge.textContent = String(card.value);
+        btn.appendChild(badge);
+      } else {
+        // others: simple colored box with number
+        const spr = document.createElement('div');
+        spr.className = 'card-sprite';
+        spr.style.background = card.color === 'blue' ? 'linear-gradient(135deg,#3498db,#2980b9)' :
+                            card.color === 'yellow' ? 'linear-gradient(135deg,#f1c40f,#f39c12)' :
+                            'linear-gradient(135deg,#2ecc71,#27ae60)';
+        spr.style.display = 'flex';
+        spr.style.alignItems = 'center';
+        spr.style.justifyContent = 'center';
+        spr.style.fontWeight = '800';
+        spr.style.fontSize = '16px';
+        spr.textContent = card.value;
+        btn.appendChild(spr);
+      }
+
+      btn.addEventListener('click', ()=>{
+        // highlight
+        document.querySelectorAll('.card-btn').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.selected = { playerId: player.id, cardIndex: idx };
+      });
+
+      el.appendChild(btn);
+    });
+  });
+}
+
+/* ------------- render board ------------- */
+function renderBoard(){
+  for(let r=0;r<9;r++){
+    for(let c=0;c<9;c++){
+      const cellData = state.board[r][c];
+      const cell = boardEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+      cell.innerHTML = '';
+      if (!cellData) continue;
+      const wrap = document.createElement('div');
+      wrap.className = 'placed-wrap';
+      if (cellData.color === 'red'){
+        const spr = document.createElement('div');
+        spr.className = 'placed-sprite';
+        spr.style.backgroundImage = `url('${PLAYER1_SPRITE}')`;
+        spr.style.backgroundSize = `${FRAME_COUNT * 100}% 100%`;
+        const step = 100 / FRAME_COUNT;
+        const posX = -(FRAME_INDEX_TO_SHOW * step);
+        spr.style.backgroundPosition = `${posX}% 0%`;
+        wrap.appendChild(spr);
+
+        const b = document.createElement('div');
+        b.className = 'placed-badge';
+        b.textContent = String(cellData.value);
+        wrap.appendChild(b);
+      } else {
+        const box = document.createElement('div');
+        box.style.width='100%';box.style.height='100%';box.style.display='flex';box.style.alignItems='center';box.style.justifyContent='center';
+        box.style.fontWeight='800';box.style.fontSize='18px';box.style.borderRadius='6px';
+        if (cellData.color === 'blue') box.style.background = 'linear-gradient(135deg,#3498db,#2980b9)';
+        if (cellData.color === 'yellow') box.style.background = 'linear-gradient(135deg,#f1c40f,#f39c12)';
+        if (cellData.color === 'green') box.style.background = 'linear-gradient(135deg,#2ecc71,#27ae60)';
+        box.textContent = cellData.value;
+        wrap.appendChild(box);
+      }
+      cell.appendChild(wrap);
+    }
+  }
+}
+
+/* ------------- game rules & placement ------------- */
+function isValidMove(r,c,card){
+  if (state.firstMove) return r===4 && c===4;
+  const existing = state.board[r][c];
+  if (existing) return card.value > existing.value;
+  // adjacent check
+  for (let dr=-1;dr<=1;dr++){
+    for (let dc=-1;dc<=1;dc++){
+      if (dr===0 && dc===0) continue;
+      const nr=r+dr, nc=c+dc;
+      if (nr>=0 && nr<9 && nc>=0 && nc<9 && state.board[nr][nc]) return true;
+    }
+  }
+  return false;
+}
+
+function placeCardAt(r,c){
+  const sel = state.selected;
+  if (!sel) { alert('Pilih kartu dulu'); return false; }
+  const player = state.players.find(p=>p.id===sel.playerId);
+  if (!player) return false;
+  const card = player.cards[sel.cardIndex];
+  if (!isValidMove(r,c,card)){ alert('Gerakan tidak valid'); return false; }
+
+  // place
+  state.board[r][c] = { value: card.value, color: card.color, playerId: player.id };
+  // remove from hand, draw if deck
+  player.cards.splice(sel.cardIndex,1);
+  if (player.deck.length > 0) player.cards.push(player.deck.shift());
+
+  // reset selection and rerender
+  state.selected = null;
+  document.querySelectorAll('.card-btn').forEach(b=>b.classList.remove('selected'));
+  renderHands();
+  renderBoard();
+
+  // after first placement, mark
+  state.firstMove = false;
+  // rotate current
+  state.current = (state.current + 1) % state.players.length;
+  return true;
+}
+
+function onCellClick(r,c){
+  if (!state.started) { alert('Mulai game dulu'); return; }
+  if (!state.selected) { alert('Pilih kartu dulu'); return; }
+  placeCardAt(r,c);
+}
+
+/* ------------- start / restart ------------- */
+startBtn.addEventListener('click', startGame);
+
+function startGame(){
+  state.started = true;
+  state.firstMove = true;
+  state.board = Array(9).fill().map(()=>Array(9).fill(null));
+  state.current = 0;
+  state.selected = null;
+
+  // build decks and deal
+  const decks = createDecks();
+  state.players.forEach(p=>{
+    p.deck = shuffle([...decks[p.color]]);
+    p.cards = p.deck.splice(0,3);
+  });
+
+  renderHands();
+  renderBoard();
+  buildBoard(); // ensure board exists -> build first (buildBoard sets cells)
+  // small fix: we built board after renderBoard call, so call renderBoard again.
+  renderBoard();
+
+  // highlight current player (optional visual)
+  document.getElementById('player1').style.boxShadow = '0 0 0 3px rgba(255,215,0,0.05)';
+  alert('Game dimulai — Player 1 tempatkan kartu di center (4,4)');
+}
+
+/* ------------- init page ------------- */
+window.addEventListener('load', ()=>{
+  buildBoard();
+  // placeholders in hands until start
+  state.players.forEach((p,i)=>{
+    const el = handEls[p.id];
+    el.innerHTML = '';
+    for(let k=0;k<3;k++){
+      const ph = document.createElement('div');
+      ph.style.width='56px';ph.style.height='64px';ph.style.borderRadius='8px';ph.style.background='rgba(255,255,255,0.02)';
+      el.appendChild(ph);
+    }
+  });
+});
+</script>
+</body>
+</html>

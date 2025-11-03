@@ -1,0 +1,235 @@
+/* ===== SPLIT LAYOUT + RIGHT-ALIGNED LOGIN (BERSIH) ===== */
+
+/* Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: "Poppins", sans-serif; }
+html, body { height: 100%; width: 100%; }
+
+/* dasar body: jangan pakai center/justify-content di body */
+body {
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, #fff0f6 0%, #ffe0ef 100%);
+  overflow: hidden;
+}
+
+/* Container split */
+.split-root {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+/* LEFT PANEL: area/bg atau kosong (logo sudah fixed) */
+.left-panel {
+  flex: 1;
+  /* jika mau gambar besar di kiri, tambahkan background-image di sini */
+  background: transparent;
+}
+
+/* RIGHT PANEL: pastikan konten berada di kanan */
+.right-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* <--- kunci: paksa isi berada di kanan */
+  padding-right: 420px;       /* jarak dari tepi kanan, ubah sesuai selera */
+  background: linear-gradient(180deg, #fff0f6 0%, #ffe0ef 100%);
+}
+
+/* LOGIN CARD (tetap translucent glass) */
+.login-card {
+  width: 360px;
+  max-width: 92%;
+  background: rgba(255, 255, 255, 0.15); /* transparan */
+  border-radius: 28px;
+  padding: 36px 32px;
+  color: white;
+  box-shadow: 0 8px 30px rgba(255, 120, 160, 0.25);
+  backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255,255,255,0.18);
+  text-align: center;
+}
+
+/* Judul */
+
+/* Judul */
+/* ✨ efek kilau bergerak (bling-bling) */
+.login-title {
+  font-size: 25px; /* biar keliatan besar */
+  font-weight: 900;
+  color: #ffecec;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 150, 200, 0.5);
+}
+
+/* ini bagian kilauannya */
+.login-title::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  animation: shine 2.5s infinite ease-in-out;
+}
+
+/* animasi cahaya melintas */
+@keyframes shine {
+  0% { left: -75%; }
+  50% { left: 125%; }
+  100% { left: 125%; }
+}
+
+/* tambahkan sedikit kedip lembut juga */
+@keyframes blink-glow {
+  0%, 100% {
+    text-shadow: 0 0 10px #ff9fc6, 0 0 20px #ff77b0;
+  }
+  50% {
+    text-shadow: 0 0 20px #ffc2dc, 0 0 40px #ffaad0;
+  }
+}
+
+.login-title {
+  animation: blink-glow 3s infinite ease-in-out;
+}
+
+/* label & input */
+label {
+  display: block;
+  text-align: left;
+  margin-bottom: 12px;
+  color: #ff4f9a;
+  font-size: 14px;
+  font-weight: 700;
+}
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #000;
+  font-size: 14px;
+  outline: none;
+  margin-top: 8px;
+  transition: background 0.25s, box-shadow 0.25s;
+}
+input::placeholder { color: rgba(0,0,0,0.45); }
+input:focus { background: rgba(255,255,255,0.22); box-shadow: 0 8px 18px rgba(0,0,0,0.18); }
+
+/* tombol */
+.btn {
+  width: 100%;
+  background: linear-gradient(90deg, #ff4f9a, #ff77b0);
+  border: none;
+  padding: 12px;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 30px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.15s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+
+/* footer */
+.form-footer { margin-top: 14px; }
+.signup-text { font-size: 13px; color: #0c080a; }
+.signup-link { color: #f40a70; font-weight: 700; text-decoration: none; }
+.signup-link:hover { text-decoration: underline; }
+
+/* fixed logo kiri (center vertikal) */
+.logo-left {
+  position: fixed;
+  left: 420px; /* ✅ makin besar = makin menjauh dari tepi kiri */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 420px;
+  height: auto;
+  opacity: 1.95;
+  z-index: 3;
+  pointer-events: none;
+  user-select: none;
+  transform: translateY(-50%) scale(1);
+  transform-origin: center;
+  will-change: transform, filter, opacity;
+  animation: logo-breathe 4s ease-in-out infinite;
+}
+@keyframes logo-breathe-float {
+  0%   { transform: translateY(-62%) scale(1); }
+  50%  { transform: translateY(-58%) scale(1.090); }
+  100% { transform: translateY(-62%) scale(1); }
+}
+.logo-left {
+  animation: logo-breathe-float 5s cubic-bezier(.4,.0,.2,1) infinite;
+}
+
+
+/* responsiveness */
+@media (max-width: 1200px) {
+  .right-panel { padding-right: 80px; }
+  .logo-left { width: 320px; left: 30px; }
+}
+@media (max-width: 880px) {
+  .split-root { flex-direction: column; }
+  .left-panel { height: 38vh; }
+  .right-panel { height: auto; padding: 28px; justify-content: center; }
+  .login-card { transform: translateY(-8%); }
+  .logo-left { width: 220px; left: 16px; top: 18px; transform: none; position: absolute; }
+}
+@media (max-width: 480px) {
+  .left-panel { display: none; }
+  .logo-left { display: none; }
+  .right-panel { padding: 18px; }
+  .login-card {
+    background: rgba(255,255,255,0.95);
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.06);
+    backdrop-filter: none;
+  }
+}
+
+
+
+/* ==== CUSTOM CURSOR ==== */
+html.custom-cursor-active,
+body.custom-cursor-active {
+  cursor: none !important;
+}
+
+#customCursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.05s linear, opacity 0.12s linear;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+#customCursor img {
+  width: 60px;  /* ubah sesuai ukuran kursor kamu */
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+#customCursor.click img {
+  transform: scale(0.9);
+}

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Punto — Final (AI + 18-card decks + Play vs Computer button)</title>
+
+  <!-- Structured stylesheet -->
+  <style>
+    /* ---------------------------
+       Punto — Structured stylesheet
+       --------------------------- */
+
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+    :root{
+      --bg-body:#0f1724;
+      --panel-bg:rgba(0,0,0,0.30);
+      --board-bg:#2c3e50;
+      --cell-bg:#34495e;
+      --cell-hover:#4a6b8a;
+      --center-cell-bg:#3d566e;
+
+      --accent-blue-1:#3498db;
+      --accent-blue-2:#2980b9;
+      --red-1:#e74c3c;
+      --red-2:#c0392b;
+      --yellow-1:#f1c40f;
+      --yellow-2:#f39c12;
+      --green-1:#2ecc71;
+      --green-2:#27ae60;
+
+      --font-sans:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      --max-width:1200px;
+      --board-max-width:640px;
+      --gap:12px;
+
+      --card-shadow:0 2px 5px rgba(0,0,0,0.3);
+      --panel-shadow:0 4px 15px rgba(0,0,0,0.2);
+      --muted-text:#d1d5db;
+      --gold:rgba(255,215,0,0.12);
+    }
+
+    html,body{height:100%}
+    body{
+      background:var(--bg-body);
+      color:white;
+      font-family:var(--font-sans);
+      min-height:100vh;
+      padding:20px;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .container{max-width:var(--max-width);margin:0 auto}
+    header{ text-align:center;margin-bottom:20px;padding:15px;background:var(--panel-bg);border-radius:10px;box-shadow:var(--panel-shadow); }
+    h1{font-size:2.2rem;text-shadow:2px 2px 4px rgba(0,0,0,0.5)}
+
+    .game-info{ display:flex;justify-content:space-between;gap:12px;margin-bottom:20px;background:var(--panel-bg);padding:15px;border-radius:10px;align-items:start;flex-wrap:wrap; }
+    .player-info{ flex:1 1 0; min-width:140px; display:flex; flex-direction:column; align-items:center; padding:10px; border-radius:8px; transition:all .25s }
+    .player-info.current-player{ box-shadow:0 0 0 3px gold; background:var(--gold) }
+    .player-name{ font-weight:700; margin-bottom:10px; font-size:1.05rem }
+    .player-cards{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+
+    .game-area{ display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap }
+    .board-container{ flex:3 1 640px; background:var(--panel-bg); padding:15px; border-radius:10px; min-width:320px }
+    .controls{ flex:1 1 260px; background:var(--panel-bg); padding:15px; border-radius:10px; display:flex; flex-direction:column; gap:20px; justify-content:space-between; min-width:220px }
+
+    .board{ display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr); gap:2px; background:var(--board-bg); padding:10px; border-radius:5px; margin:0 auto; max-width:var(--board-max-width); width:100%; }
+    .cell{ aspect-ratio:1/1; background:var(--cell-bg); border-radius:3px; display:flex; align-items:center; justify-content:center; font-weight:700; cursor:pointer; transition:transform .12s ease, background .12s ease; position:relative; color:inherit; }
+    .cell:hover{ background:var(--cell-hover); transform:scale(1.04) }
+    .cell.occupied{ cursor:default; transform:none }
+    .cell.occupied:hover{ background:var(--cell-bg); transform:none }
+    .cell.center-cell{ background:var(--center-cell-bg); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.5) }
+
+    .card{ width:100%; height:100%; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; box-shadow:var(--card-shadow); font-weight:800 }
+    .card.red{ background:linear-gradient(135deg,var(--red-1),var(--red-2)); color:#fff }
+    .card.blue{ background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:#fff }
+    .card.yellow{ background:linear-gradient(135deg,var(--yellow-1),var(--yellow-2)); color:#222 }
+    .card.green{ background:linear-gradient(135deg,var(--green-1),var(--green-2)); color:#fff }
+
+    .player-card{ width:50px; height:50px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; cursor:pointer; box-shadow:0 3px 6px rgba(0,0,0,0.28); transition:transform .18s ease, box-shadow .18s ease; font-size:1.05rem }
+    .player-card.red{ background:linear-gradient(135deg,var(--red-1),var(--red-2)); color:#fff }
+    .player-card.blue{ background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:#fff }
+    .player-card.yellow{ background:linear-gradient(135deg,var(--yellow-1),var(--yellow-2)); color:#222 }
+    .player-card.green{ background:linear-gradient(135deg,var(--green-1),var(--green-2)); color:#fff }
+    .player-card:hover{ transform:translateY(-5px); box-shadow:0 6px 14px rgba(0,0,0,0.36) }
+    .player-card.selected{ transform:translateY(-10px); box-shadow:0 0 18px gold }
+    .selected-card-info .player-card{ margin:10px auto; width:60px; height:60px; font-size:1.25rem }
+
+    .controls-buttons{ display:flex; flex-direction:column; gap:10px; margin-top:auto }
+    .undo-redo-buttons{ display:flex; gap:10px }
+    .undo-redo-buttons button{ flex:1 }
+    button{ padding:12px 20px; background:linear-gradient(135deg,var(--accent-blue-1),var(--accent-blue-2)); color:white; border:none; border-radius:6px; cursor:pointer; font-size:1rem; font-weight:700; transition:transform .18s ease, box-shadow .18s ease; box-shadow:0 3px 6px rgba(0,0,0,0.22) }
+    button:hover{ transform:translateY(-2px); box-shadow:0 6px 12px rgba(0,0,0,0.28) }
+    button:active{ transform:translateY(0) }
+    button:disabled{ background:#878b8b; cursor:not-allowed; transform:none; box-shadow:0 3px 6px rgba(0,0,0,0.18) }
+
+    .message{ text-align:center; padding:15px; background:var(--panel-bg); border-radius:10px; margin-top:20px; font-size:1.05rem; min-height:60px; display:flex; align-items:center; justify-content:center; color:var(--muted-text) }
+    .rules{ background:var(--panel-bg); padding:15px; border-radius:10px; margin-top:12px; transition:all .25s ease; display:none }
+    .rules h2{ margin-bottom:10px }
+    .rules ul{ list-style-position:inside; margin-left:10px }
+    .rules li{ margin-bottom:8px; color:var(--muted-text) }
+
+    .winning-cells{ animation:pulse 1.5s infinite }
+    @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(255,215,0,0.7) } 70%{ box-shadow:0 0 0 10px rgba(255,215,0,0) } 100%{ box-shadow:0 0 0 0 rgba(255,215,0,0) } }
+
+    @media (max-width:980px){ .game-info{ flex-direction:column } .game-area{ flex-direction:column } .board-container,.controls{ width:100% } .board{ max-width:480px } }
+    @media (max-width:420px){ h1{ font-size:1.6rem } .player-card{ width:44px; height:44px; font-size:.95rem } .card{ font-size:1rem } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header><h1>Punto</h1></header>
+
+    <div class="game-info" id="players-row">
+      <div class="player-info" id="player1"><div class="player-name">Player 1</div><div class="player-cards" id="player1-cards"></div></div>
+      <div class="player-info" id="player2"><div class="player-name">Player 2</div><div class="player-cards" id="player2-cards"></div></div>
+      <div class="player-info" id="player3"><div class="player-name">Player 3</div><div class="player-cards" id="player3-cards"></div></div>
+      <div class="player-info" id="player4"><div class="player-name">Player 4</div><div class="player-cards" id="player4-cards"></div></div>
+    </div>
+
+    <div class="game-area">
+      <div class="board-container">
+        <div class="board" id="game-board"></div>
+      </div>
+
+      <div class="controls">
+        <div>
+          <h3>Selected Card</h3>
+          <div id="selected-card-display">None</div>
+        </div>
+
+        <div>
+          <h3>Game Status</h3>
+          <div id="current-player">Player 1's Turn</div>
+        </div>
+
+        <div class="ai-controls">
+          <h3>AI Players</h3>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p1"> Player 1 (red)</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p2"> Player 2 (blue)</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p3"> Player 3 (yellow)</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p4"> Player 4 (green)</label>
+          <small style="opacity:.8;display:block;margin-top:6px">Checkboxes let you set any player(s) to AI. Or use the quick buttons below.</small>
+
+          <!-- NEW: quick buttons for Play vs Computer and Stop AI Mode -->
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button id="start-pvc" style="flex:1">Play vs Computer</button>
+            <button id="stop-pvc" style="flex:1;background:linear-gradient(135deg,#c0392b,#e74c3c)">Stop AI Mode</button>
+          </div>
+        </div>
+
+        <div class="controls-buttons">
+          <div class="undo-redo-buttons"><button id="undo-btn" disabled>Undo</button><button id="redo-btn" disabled>Redo</button></div>
+          <button id="start-restart-game">Reset Game</button>
+          <button id="rules-btn">Show Rules</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="message" id="game-message">Welcome to Punto! Game is starting...</div>
+
+    <div class="rules" id="rules-panel">
+      <h2>Game Rules</h2>
+      <ul>
+        <li>2–4 players, board 9×9.</li>
+        <li>Each color has 18 cards (two sets of 1–9). Demo deals 3 cards to start.</li>
+        <li>First move must be center (4,4). After that, place adjacent or stack on lower value.</li>
+        <li>Win by placing 4 same-color cards in a row (horizontal, vertical, diagonal).</li>
+        <li>Each placement: draw one card from your deck (if available).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Script: game logic + AI -->
+  <script>
+    // -------- Game state --------
+    const gameState = {
+      players: [
+        { id:1, name:'Player 1', color:'red', cards:[], deck:[], isCurrent:true },
+        { id:2, name:'Player 2', color:'blue', cards:[], deck:[], isCurrent:false },
+        { id:3, name:'Player 3', color:'yellow', cards:[], deck:[], isCurrent:false },
+        { id:4, name:'Player 4', color:'green', cards:[], deck:[], isCurrent:false }
+      ],
+      board: Array(9).fill().map(()=>Array(9).fill(null)),
+      currentPlayerIndex:0,
+      selectedCard:null,
+      gameStarted:false,
+      gameOver:false,
+      firstMove:true,
+      moveHistory:[],
+      futureMoves:[],
+      maxHistorySize:200,
+      rulesVisible:false
+    };
+
+    // AI toggles
+    const aiPlayers = {1:false,2:false,3:false,4:false};
+    document.getElementById('ai-p1').addEventListener('change', e=>aiPlayers[1]=e.target.checked);
+    document.getElementById('ai-p2').addEventListener('change', e=>aiPlayers[2]=e.target.checked);
+    document.getElementById('ai-p3').addEventListener('change', e=>aiPlayers[3]=e.target.checked);
+    document.getElementById('ai-p4').addEventListener('change', e=>aiPlayers[4]=e.target.checked);
+
+    // DOM refs
+    const gameBoard = document.getElementById('game-board');
+    const gameMessage = document.getElementById('game-message');
+    const currentPlayerDisplay = document.getElementById('current-player');
+    const selectedCardDisplay = document.getElementById('selected-card-display');
+    const startRestartGameBtn = document.getElementById('start-restart-game');
+    const rulesBtn = document.getElementById('rules-btn');
+    const rulesPanel = document.getElementById('rules-panel');
+    const undoBtn = document.getElementById('undo-btn');
+    const redoBtn = document.getElementById('redo-btn');
+
+    // Buttons for quick P v C mode
+    const startPvcBtn = document.getElementById('start-pvc');
+    const stopPvcBtn = document.getElementById('stop-pvc');
+
+    // Move history snapshot
+    class GameMove {
+      constructor(board, players, currentPlayerIndex, firstMove, selectedCard){
+        this.board = JSON.parse(JSON.stringify(board));
+        this.players = JSON.parse(JSON.stringify(players));
+        this.currentPlayerIndex = currentPlayerIndex;
+        this.firstMove = firstMove;
+        this.selectedCard = selectedCard ? {...selectedCard} : null;
+        this.timestamp = Date.now();
+      }
+    }
+
+    // -------- Utilities --------
+    function shuffle(arr){
+      for (let i=arr.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function initializeBoard(){
+      gameBoard.innerHTML = '';
+      for (let r=0;r<9;r++){
+        for (let c=0;c<9;c++){
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          if (r===4 && c===4) cell.classList.add('center-cell');
+          cell.addEventListener('click', ()=> handleCellClick(r,c));
+          gameBoard.appendChild(cell);
+        }
+      }
+    }
+
+    // create deck: two sets of 1..9 per color => 18 cards
+    function createFullDecks(){
+      const decks = { red: [], blue: [], yellow: [], green: [] };
+      for (let set=0; set<2; set++){
+        for (let i=1;i<=9;i++){
+          decks.red.push({value:i,color:'red'});
+          decks.blue.push({value:i,color:'blue'});
+          decks.yellow.push({value:i,color:'yellow'});
+          decks.green.push({value:i,color:'green'});
+        }
+      }
+      return decks;
+    }
+
+    function initializePlayerCards(){
+      const decks = createFullDecks();
+      gameState.players.forEach(player=>{
+        const playerDeck = shuffle([...decks[player.color]]);
+        player.deck = playerDeck.slice();
+        player.cards = player.deck.slice(0,3);
+        player.deck = player.deck.slice(3);
+        updatePlayerCardsDisplay(player);
+      });
+    }
+
+    function drawCard(player){
+      if (player.deck.length>0){
+        const card = player.deck.shift();
+        player.cards.push(card);
+        updatePlayerCardsDisplay(player);
+        return true;
+      }
+      return false;
+    }
+
+    function updatePlayerCardsDisplay(player){
+      const container = document.getElementById(`player${player.id}-cards`);
+      container.innerHTML = '';
+      player.cards.forEach((card, idx)=>{
+        const el = document.createElement('div');
+        el.className = `player-card ${card.color}`;
+        el.textContent = card.value;
+        el.addEventListener('click', ()=> handleCardSelect(player.id, idx));
+        container.appendChild(el);
+      });
+      updatePlayerHighlights();
+    }
+
+    function updatePlayerHighlights(){
+      gameState.players.forEach(p=>{
+        const el = document.getElementById(`player${p.id}`);
+        if (p.isCurrent) el.classList.add('current-player'); else el.classList.remove('current-player');
+      });
+    }
+
+    function updateCurrentPlayerDisplay(){
+      currentPlayerDisplay.textContent = `${gameState.players[gameState.currentPlayerIndex].name}'s Turn`;
+    }
+
+    function updateBoardDisplay(){
+      for (let r=0;r<9;r++){
+        for (let c=0;c<9;c++){
+          const cell = gameState.board[r][c];
+          const el = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+          if (cell){
+            el.innerHTML = `<div class="card ${cell.color}">${cell.value}</div>`;
+            el.classList.add('occupied');
+          } else {
+            el.innerHTML = '';
+            el.classList.remove('occupied');
+          }
+        }
+      }
+    }
+
+    // -------- History (undo/redo) --------
+    function saveMoveToHistory(){
+      const mv = new GameMove(gameState.board, gameState.players, gameState.currentPlayerIndex, gameState.firstMove, gameState.selectedCard);
+      gameState.moveHistory.push(mv);
+      gameState.futureMoves = [];
+      if (gameState.moveHistory.length > gameState.maxHistorySize) gameState.moveHistory.shift();
+      updateUndoRedoButtons();
+    }
+
+    function undoMove(){
+      if (gameState.moveHistory.length===0 || gameState.gameOver) return;
+      const last = gameState.moveHistory.pop();
+      gameState.futureMoves.push(last);
+      gameState.board = last.board;
+      gameState.players = last.players;
+      gameState.currentPlayerIndex = last.currentPlayerIndex;
+      gameState.firstMove = last.firstMove;
+      gameState.selectedCard = last.selectedCard;
+      gameState.gameOver = false;
+      updateBoardDisplay();
+      gameState.players.forEach(p=>updatePlayerCardsDisplay(p));
+      updatePlayerHighlights();
+      updateCurrentPlayerDisplay();
+      gameMessage.textContent = "Move undone";
+      updateUndoRedoButtons();
+    }
+
+    function redoMove(){
+      if (gameState.futureMoves.length===0 || gameState.gameOver) return;
+      const next = gameState.futureMoves.pop();
+      gameState.moveHistory.push(next);
+      gameState.board = next.board;
+      gameState.players = next.players;
+      gameState.currentPlayerIndex = next.currentPlayerIndex;
+      gameState.firstMove = next.firstMove;
+      gameState.selectedCard = next.selectedCard;
+      updateBoardDisplay();
+      gameState.players.forEach(p=>updatePlayerCardsDisplay(p));
+      updatePlayerHighlights();
+      updateCurrentPlayerDisplay();
+      gameMessage.textContent = "Move redone";
+      updateUndoRedoButtons();
+    }
+
+    function updateUndoRedoButtons(){
+      undoBtn.disabled = gameState.moveHistory.length===0 || gameState.gameOver;
+      redoBtn.disabled = gameState.futureMoves.length===0 || gameState.gameOver;
+    }
+
+    // -------- Selection & placement --------
+    function handleCardSelect(playerId, cardIndex){
+      if (!gameState.gameStarted || gameState.gameOver) return;
+      const player = gameState.players.find(p=>p.id===playerId);
+      if (!player.isCurrent) return;
+      if (gameState.selectedCard){
+        const prev = document.querySelectorAll(`#player${gameState.selectedCard.playerId}-cards .player-card`);
+        if (prev[gameState.selectedCard.cardIndex]) prev[gameState.selectedCard.cardIndex].classList.remove('selected');
+      }
+      gameState.selectedCard = { playerId, cardIndex };
+      const curCards = document.querySelectorAll(`#player${playerId}-cards .player-card`);
+      if (curCards[cardIndex]) curCards[cardIndex].classList.add('selected');
+      const card = player.cards[cardIndex];
+      selectedCardDisplay.innerHTML = `<div class="player-card ${card.color}" style="width:60px;height:60px;font-size:1.2rem">${card.value}</div>`;
+      if (gameState.firstMove) gameMessage.textContent = `Selected: ${card.color} ${card.value}. Place at center (4,4).`;
+      else gameMessage.textContent = `Selected: ${card.color} ${card.value}. Choose a valid board position.`;
+    }
+
+    function isValidMove(row,col,card){
+      if (gameState.firstMove){
+        return row===4 && col===4;
+      } else {
+        const existing = gameState.board[row][col];
+        if (existing !== null){
+          if (card.value > existing.value) return true;
+          return false;
+        }
+        for (let i=-1;i<=1;i++){
+          for (let j=-1;j<=1;j++){
+            if (i===0 && j===0) continue;
+            const nr=row+i, nc=col+j;
+            if (nr>=0 && nr<9 && nc>=0 && nc<9){
+              if (gameState.board[nr][nc] !== null) return true;
+            }
+          }
+        }
+        return false;
+      }
+    }
+
+    function performPlacement(player, cardIndex, row, col){
+      const card = player.cards[cardIndex];
+      if (!isValidMove(row,col,card)) return false;
+      saveMoveToHistory();
+      gameState.board[row][col] = { value:card.value, color:card.color, playerId:player.id };
+      player.cards.splice(cardIndex,1);
+      drawCard(player);
+      updateBoardDisplay();
+      updatePlayerCardsDisplay(player);
+
+      if (gameState.firstMove){
+        gameState.firstMove = false;
+        const center = document.querySelector('.cell.center-cell');
+        if (center) center.classList.remove('center-cell');
+      }
+
+      if (checkWinCondition(player.id,row,col)){
+        gameState.gameOver = true;
+        gameMessage.textContent = `${player.name} wins! Four ${player.color} in a row!`;
+        highlightWinningCells(player.id);
+        gameState.selectedCard = null;
+        selectedCardDisplay.textContent = 'None';
+        startRestartGameBtn.textContent = 'Restart Game';
+        updateUndoRedoButtons();
+        return true;
+      }
+
+      nextPlayer();
+      gameState.selectedCard = null;
+      selectedCardDisplay.textContent = 'None';
+      document.querySelectorAll('.player-card.selected').forEach(el=>el.classList.remove('selected'));
+
+      if (!hasValidMoves()){
+        gameState.gameOver = true;
+        gameMessage.textContent = "Game over! No valid moves remaining.";
+        startRestartGameBtn.textContent = 'Restart Game';
+      }
+
+      updateUndoRedoButtons();
+      return true;
+    }
+
+    function handleCellClick(row,col){
+      if (!gameState.gameStarted || gameState.gameOver) return;
+      if (!gameState.selectedCard) return;
+      const player = gameState.players.find(p=>p.id===gameState.selectedCard.playerId);
+      if (!player.isCurrent) return;
+      const cardIndex = gameState.selectedCard.cardIndex;
+      if (!performPlacement(player, cardIndex, row, col)){
+        if (gameState.firstMove) gameMessage.textContent = "First move must be center (4,4).";
+        else gameMessage.textContent = "Invalid move! Choose an adjacent empty square or valid stack.";
+      }
+    }
+
+    // -------- Win detection & highlight --------
+    function checkWinCondition(playerId,row,col){
+      const color = gameState.players.find(p=>p.id===playerId).color;
+      // horizontal
+      for (let c=0;c<=5;c++){
+        let cnt=0;
+        for (let i=0;i<4;i++){
+          const cell = gameState.board[row][c+i];
+          if (cell && cell.color===color) cnt++; else break;
+        }
+        if (cnt===4) return true;
+      }
+      // vertical
+      for (let r=0;r<=5;r++){
+        let cnt=0;
+        for (let i=0;i<4;i++){
+          const cell = gameState.board[r+i][col];
+          if (cell && cell.color===color) cnt++; else break;
+        }
+        if (cnt===4) return true;
+      }
+      // diag down-right
+      for (let r=0;r<=5;r++){
+        for (let c=0;c<=5;c++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = gameState.board[r+i][c+i];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      // diag down-left
+      for (let r=0;r<=5;r++){
+        for (let c=3;c<9;c++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = gameState.board[r+i][c-i];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      return false;
+    }
+
+    function highlightWinningCells(playerId){
+      const color = gameState.players.find(p=>p.id===playerId).color;
+      for (let r=0;r<9;r++){
+        for (let c=0;c<9;c++){
+          const cell = gameState.board[r][c];
+          if (cell && cell.color===color){
+            const el = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+            if (el) el.classList.add('winning-cells');
+          }
+        }
+      }
+    }
+
+    function hasValidMoves(){
+      for (const p of gameState.players){
+        if (p.cards.length===0) continue;
+        for (let r=0;r<9;r++){
+          for (let c=0;c<9;c++){
+            for (const card of p.cards){
+              if (isValidMove(r,c,card)) return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    // -------- Next player & AI trigger --------
+    function nextPlayer(){
+      gameState.players[gameState.currentPlayerIndex].isCurrent = false;
+      gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+      gameState.players[gameState.currentPlayerIndex].isCurrent = true;
+      updatePlayerHighlights();
+      updateCurrentPlayerDisplay();
+      gameMessage.textContent = `${gameState.players[gameState.currentPlayerIndex].name}'s turn. Select a card.`;
+      if (gameState.players[gameState.currentPlayerIndex].cards.length===0){
+        nextPlayer();
+        return;
+      }
+      const cur = gameState.players[gameState.currentPlayerIndex];
+      if (aiPlayers[cur.id] && !gameState.gameOver){
+        setTimeout(()=> computerMove(cur), 280);
+      }
+    }
+
+    // -------- AI (heuristic) --------
+    function simulatePlaceAndCheck(board,row,col,color,value){
+      const tmp = board.map(r=> r.map(cell => cell ? {...cell} : null));
+      tmp[row][col] = { color, value };
+      // horizontal
+      for (let r=0;r<9;r++){
+        for (let c=0;c<=5;c++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = tmp[r][c+i];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      // vertical
+      for (let c=0;c<9;c++){
+        for (let r=0;r<=5;r++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = tmp[r+i][c];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      // diag down-right
+      for (let r=0;r<=5;r++){
+        for (let c=0;c<=5;c++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = tmp[r+i][c+i];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      // diag down-left
+      for (let r=0;r<=5;r++){
+        for (let c=3;c<9;c++){
+          let cnt=0;
+          for (let i=0;i<4;i++){
+            const cell = tmp[r+i][c-i];
+            if (cell && cell.color===color) cnt++; else break;
+          }
+          if (cnt===4) return true;
+        }
+      }
+      return false;
+    }
+
+    function evaluateMove(row,col,card,player){
+      let score = 0;
+      const color = player.color;
+      // immediate win
+      if (simulatePlaceAndCheck(gameState.board,row,col,color,card.value)){
+        score += 100000;
+        return score;
+      }
+      // stacking advantage
+      const existing = gameState.board[row][col];
+      if (existing && card.value > existing.value) score += 250;
+      // extend own adjacent
+      let extend=0;
+      for (let i=-1;i<=1;i++){
+        for (let j=-1;j<=1;j++){
+          if (i===0 && j===0) continue;
+          const nr=row+i, nc=col+j;
+          if (nr>=0 && nr<9 && nc>=0 && nc<9){
+            const cell = gameState.board[nr][nc];
+            if (cell && cell.color===color) extend++;
+          }
+        }
+      }
+      score += extend * 80;
+      // block opponent immediate win
+      for (const opp of gameState.players){
+        if (opp.id === player.id) continue;
+        for (const oppCard of opp.cards){
+          if (isValidMove(row,col,oppCard)){
+            if (simulatePlaceAndCheck(gameState.board,row,col,opp.color,oppCard.value)){
+              score += 450;
+            }
+          }
+        }
+      }
+      // prefer center-ish
+      const centerDist = Math.abs(row-4)+Math.abs(col-4);
+      score -= centerDist * 4;
+      score += Math.random() * 8;
+      return score;
+    }
+
+    function computerMove(player){
+      if (!player || player.cards.length===0 || gameState.gameOver) return;
+      let best = {score:-Infinity, row:null, col:null, cardIndex:null};
+      for (let ci=0; ci<player.cards.length; ci++){
+        const card = player.cards[ci];
+        for (let r=0;r<9;r++){
+          for (let c=0;c<9;c++){
+            if (!isValidMove(r,c,card)) continue;
+            const sc = evaluateMove(r,c,card,player);
+            if (sc > best.score){
+              best.score = sc; best.row = r; best.col = c; best.cardIndex = ci;
+            }
+          }
+        }
+      }
+      if (best.cardIndex !== null){
+        performPlacement(player, best.cardIndex, best.row, best.col);
+        gameMessage.textContent = `${player.name} (AI) placed a card.`;
+      } else {
+        gameMessage.textContent = `${player.name} (AI) has no valid move and is skipped.`;
+        nextPlayer();
+      }
+    }
+
+    // -------- Start / restart --------
+    function startRestartGame(){
+      gameState.gameStarted = true;
+      gameState.gameOver = false;
+      gameState.firstMove = true;
+      gameState.currentPlayerIndex = 0;
+      gameState.selectedCard = null;
+      gameState.moveHistory = [];
+      gameState.futureMoves = [];
+
+      gameState.board = Array(9).fill().map(()=>Array(9).fill(null));
+      gameState.players.forEach((p,i)=>{ p.isCurrent = i===0; p.cards=[]; p.deck=[]; });
+
+      initializeBoard();
+      initializePlayerCards();
+      updateBoardDisplay();
+      selectedCardDisplay.textContent = 'None';
+      currentPlayerDisplay.textContent = `${gameState.players[0].name}'s Turn`;
+      gameMessage.textContent = "Game started! Player 1, place a card in center.";
+      startRestartGameBtn.textContent = 'Reset Game';
+      updateUndoRedoButtons();
+
+      const cur = gameState.players[gameState.currentPlayerIndex];
+      if (aiPlayers[cur.id]) setTimeout(()=> computerMove(cur), 280);
+    }
+
+    // -------- Quick Play vs Computer logic (button handlers) --------
+    startPvcBtn.addEventListener('click', ()=>{
+      // Quick mode: Player 1 = human, Player 2 = AI; others remain human (unless checkboxes used)
+      aiPlayers[1] = false;
+      aiPlayers[2] = true;
+      aiPlayers[3] = false;
+      aiPlayers[4] = false;
+      // sync the checkboxes UI
+      document.getElementById('ai-p1').checked = false;
+      document.getElementById('ai-p2').checked = true;
+      document.getElementById('ai-p3').checked = false;
+      document.getElementById('ai-p4').checked = false;
+      gameMessage.textContent = "Mode: Player 1 vs Computer (Player 2). Starting game...";
+      startRestartGame();
+    });
+
+    stopPvcBtn.addEventListener('click', ()=>{
+      // Turn off all quick AI flags (but keep any manually checked ones off too)
+      aiPlayers[1] = false; aiPlayers[2] = false; aiPlayers[3] = false; aiPlayers[4] = false;
+      document.getElementById('ai-p1').checked = false;
+      document.getElementById('ai-p2').checked = false;
+      document.getElementById('ai-p3').checked = false;
+      document.getElementById('ai-p4').checked = false;
+      gameMessage.textContent = "AI mode stopped. All players set to human. Resetting game...";
+      startRestartGame();
+    });
+
+    // -------- Event listeners & init --------
+    startRestartGameBtn.addEventListener('click', startRestartGame);
+    rulesBtn.addEventListener('click', ()=>{
+      gameState.rulesVisible = !gameState.rulesVisible;
+      rulesPanel.style.display = gameState.rulesVisible ? 'block' : 'none';
+      rulesBtn.textContent = gameState.rulesVisible ? 'Hide Rules' : 'Show Rules';
+    });
+    undoBtn.addEventListener('click', undoMove);
+    redoBtn.addEventListener('click', redoMove);
+
+    window.addEventListener('load', ()=>{
+      initializeBoard();
+      startRestartGame();
+    });
+  </script>
+</body>
+</html>

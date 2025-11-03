@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Halaman Utama - Gambar Penuh Layar</title>
+  <link rel="stylesheet" href="utama.css" />
+</head>
+<!-- index.html (potongan body) -->
+<body>
+  <img src="utama.png" alt="Gambar utama" class="full-screen-img" />
+<img src="at1.png" alt="Play Game" class="back-center-img" id="play-img" />
+
+
+  <img src="bg3.png" alt="Gambar tengah depan" class="center-img" />
+
+  <!-- DP layers: urut dari belakang -> depan (dp1 paling belakang dari grup dp, dp4 paling depan) -->
+  <img src="dp1.png" alt="DP 1" class="dp dp1-img" />
+  <img src="dp2.png" alt="DP 2" class="dp dp2-img" />
+  <img src="dp3.png" alt="DP 3" class="dp dp3-img" />
+  <img src="dp4.png" alt="DP 4" class="dp dp4-img" />
+
+  <div class="side-wrap">
+    <img class="side-img" src="bg4.png" alt="bg4">
+  </div>
+
+  <div class="side2-wrap">
+    <img class="side2-img" src="at2.png" alt="bg2">
+  </div>
+
+  <div id="intro-overlay" aria-hidden="true">
+  <div class="intro-spotlight" aria-hidden="true"></div>
+  <img id="intro-img" src="wlcm.png" alt="Welcome" />
+</div>
+
+<!-- Custom cursor (paste sebelum </body>) -->
+<div id="customCursor" aria-hidden="true">
+  <img src="krusor1.png" alt="cursor" />
+</div>
+
+<!-- AUDIO untuk halaman utama -->
+<audio id="bgm" src="tess1.mp3" preload="auto" loop></audio>
+<!-- Karakter & bubble -->
+<div class="guide" id="guide" style="display:none;">
+  <img src="karakter.png" alt="Karakter Penjelas" class="guide-char" />
+  <div class="speech-bubble">
+    <p id="guide-text"></p>
+  </div>
+</div>
+
+
+
+  <!-- Panggil JS eksternal di bawah semua elemen -->
+<script src="utama.js"></script>
+
+</body>
+
+</html>
