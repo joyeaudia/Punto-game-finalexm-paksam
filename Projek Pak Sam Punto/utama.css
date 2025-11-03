@@ -283,7 +283,18 @@ html, body {
   left: calc(50% + var(--dp3-offset-x));
   z-index: var(--dp3-z);
   filter: drop-shadow(0 0 22px var(--dp3-glow));
+
+  /* ✨ tambahkan ini */
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.18s ease, filter 0.18s ease;
 }
+
+.dp3-img:hover {
+  transform: scale(1.07);
+  filter: brightness(1.15);
+}
+
 
 .dp4-img {
   width: var(--dp4-width);

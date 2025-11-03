@@ -258,6 +258,7 @@
     }
   }
 
+
   // mulai
   startTypingMessage();
 
@@ -270,5 +271,13 @@
 document.getElementById("play-img").addEventListener("click", () => {
   window.location.href = "Game.html";
 });
+
+// === Tambahan: klik pada DP3 untuk ke mabar.html ===
+const dp3 = document.querySelector(".dp3-img");
+if (dp3) {
+  dp3.addEventListener("click", () => {
+    window.location.href = "mabar.html";
+  });
+}
 
 })();
