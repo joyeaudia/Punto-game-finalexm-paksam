@@ -20,14 +20,29 @@ const gameState = {
 
 // AI toggles
 const aiPlayers = {1:false,2:false,3:false,4:false};
-document.getElementById('ai-p1').addEventListener('change', e=>aiPlayers[1]=e.target.checked);
-document.getElementById('ai-p2').addEventListener('change', e=>aiPlayers[2]=e.target.checked);
-document.getElementById('ai-p3').addEventListener('change', e=>aiPlayers[3]=e.target.checked);
-document.getElementById('ai-p4').addEventListener('change', e=>aiPlayers[4]=e.target.checked);
 
-// DOM refs
+// ---- AI timers (so we can cancel thinking delays) ----
+let aiTimers = {};
+
+/** Cancel all pending AI timers */
+function cancelAllAiTimers(){
+  Object.keys(aiTimers).forEach(pid => {
+    clearTimeout(aiTimers[pid]);
+    delete aiTimers[pid];
+  });
+}
+
+/** Cancel timer for a single player */
+function cancelAiTimerFor(playerId){
+  if (aiTimers[playerId]){
+    clearTimeout(aiTimers[playerId]);
+    delete aiTimers[playerId];
+  }
+}
+
+// DOM refs (assume script deferred so DOM exists)
 const gameBoard = document.getElementById('game-board');
-const gameMessage = document.getElementById('game-message');
+let gameMessage = document.getElementById('game-message');
 const currentPlayerDisplay = document.getElementById('current-player');
 const selectedCardDisplay = document.getElementById('selected-card-display');
 const startRestartGameBtn = document.getElementById('start-restart-game');
@@ -68,7 +83,6 @@ if (!gameMessage) {
   fallback.className = 'message';
   fallback.textContent = 'Welcome to Punto!';
   document.body.appendChild(fallback);
-  // reassign variable so rest of script can use it
   gameMessage = document.getElementById('game-message');
 }
 
@@ -82,9 +96,10 @@ if (!gameMessage) {
 function getCandidateImagePaths(card, ownerId = null){
   const paths = [];
 
+  if (!card) return paths;
+
   // Kalau ada ownerId (1–4), coba cari folder khusus "krt", "krt2", "krt3", "krt4"
   if (ownerId !== null) {
-    // player 1 = "krt", player 2 = "krt2", dst
     const folder = ownerId === 1 ? "krt" : `krt${ownerId}`;
     paths.push(`${folder}/py${card.value}.png`);
   }
@@ -102,8 +117,6 @@ function getCandidateImagePaths(card, ownerId = null){
   return paths;
 }
 
-
-
 /**
  * Buat <img> yang mencoba srcList berurutan. Jika semua gagal, img disembunyikan.
  */
@@ -112,7 +125,7 @@ function createImgWithFallback(srcList, altText = ''){
   img.alt = altText;
   img.dataset._tryIndex = 0;
   img.style.display = 'block';
-  img.src = srcList[0];
+  if (srcList && srcList.length>0) img.src = srcList[0];
   img.onerror = function(){
     let i = parseInt(this.dataset._tryIndex || '0', 10) + 1;
     if (i < srcList.length){
@@ -130,8 +143,10 @@ function createImgWithFallback(srcList, altText = ''){
  * ownerId opsional untuk prioritas gambar player1.
  */
 function showSelectedCardPreview(card, ownerId = null){
+  // safe null handling (fix for previous recursion bug)
+  if (!selectedCardDisplay) return;
   if (!card) {
-    showSelectedCardPreview(null);
+    selectedCardDisplay.innerHTML = '';
     return;
   }
   selectedCardDisplay.innerHTML = '';
@@ -214,26 +229,27 @@ function drawCard(player){
 
 function updatePlayerCardsDisplay(player){
   const container = document.getElementById(`player${player.id}-cards`);
+  if (!container) return;
   container.innerHTML = '';
-player.cards.forEach((card, idx)=>{
-  const el = document.createElement('div');
-  el.className = `player-card ${card.color}`;
-  const candidatePaths = getCandidateImagePaths(card, player.id);
-  const img = createImgWithFallback(candidatePaths, `${card.color} ${card.value}`);
-  el.appendChild(img);
-  const badge = document.createElement('span');
-  badge.className = 'card-number';
-  badge.textContent = card.value;
-  el.appendChild(badge);
-  el.addEventListener('click', ()=> handleCardSelect(player.id, idx));
+  player.cards.forEach((card, idx)=>{
+    const el = document.createElement('div');
+    el.className = `player-card ${card.color}`;
+    const candidatePaths = getCandidateImagePaths(card, player.id);
+    const img = createImgWithFallback(candidatePaths, `${card.color} ${card.value}`);
+    el.appendChild(img);
+    const badge = document.createElement('span');
+    badge.className = 'card-number';
+    badge.textContent = card.value;
+    el.appendChild(badge);
+    el.addEventListener('click', ()=> handleCardSelect(player.id, idx));
 
-  // 💡 Tambahkan ini
-  if (player.id === 4 && card.value === 9) {
-    el.classList.add('special-card');
-  }
+    // 💡 Tambahkan ini (contoh highlight khusus)
+    if (player.id === 4 && card.value === 9) {
+      el.classList.add('special-card');
+    }
 
-  container.appendChild(el);
-});
+    container.appendChild(el);
+  });
   updatePlayerHighlights();
 }
 
@@ -241,12 +257,15 @@ player.cards.forEach((card, idx)=>{
 function updatePlayerHighlights(){
   gameState.players.forEach(p=>{
     const el = document.getElementById(`player${p.id}`);
+    if (!el) return;
     if (p.isCurrent) el.classList.add('current-player'); else el.classList.remove('current-player');
   });
 }
 
 function updateCurrentPlayerDisplay(){
-  currentPlayerDisplay.textContent = `${gameState.players[gameState.currentPlayerIndex].name}'s Turn`;
+  const cur = gameState.players[gameState.currentPlayerIndex];
+  if (!cur) return;
+  currentPlayerDisplay.textContent = `${cur.name}'s Turn`;
 }
 
 function updateBoardDisplay(){
@@ -254,6 +273,7 @@ function updateBoardDisplay(){
     for (let c=0;c<9;c++){
       const cell = gameState.board[r][c];
       const el = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      if (!el) continue;
       if (cell){
         el.innerHTML = '';
         const wrapper = document.createElement('div');
@@ -287,6 +307,9 @@ function saveMoveToHistory(){
 
 function undoMove(){
   if (gameState.moveHistory.length===0 || gameState.gameOver) return;
+  // cancel any pending AI timers (undo may make timers invalid)
+  cancelAllAiTimers();
+
   const last = gameState.moveHistory.pop();
   gameState.futureMoves.push(last);
   gameState.board = last.board;
@@ -309,6 +332,7 @@ function undoMove(){
 
 function redoMove(){
   if (gameState.futureMoves.length===0 || gameState.gameOver) return;
+  cancelAllAiTimers();
   const next = gameState.futureMoves.pop();
   gameState.moveHistory.push(next);
   gameState.board = next.board;
@@ -337,7 +361,7 @@ function updateUndoRedoButtons(){
 function handleCardSelect(playerId, cardIndex){
   if (!gameState.gameStarted || gameState.gameOver) return;
   const player = gameState.players.find(p=>p.id===playerId);
-  if (!player.isCurrent) return;
+  if (!player || !player.isCurrent) return;
   if (gameState.selectedCard){
     const prev = document.querySelectorAll(`#player${gameState.selectedCard.playerId}-cards .player-card`);
     if (prev[gameState.selectedCard.cardIndex]) prev[gameState.selectedCard.cardIndex].classList.remove('selected');
@@ -516,7 +540,8 @@ function nextPlayer(){
   }
   const cur = gameState.players[gameState.currentPlayerIndex];
   if (aiPlayers[cur.id] && !gameState.gameOver){
-    setTimeout(()=> computerMove(cur), 280);
+    // let computerMove decide its own timer (it cancels previous timers)
+    computerMove(cur);
   }
 }
 
@@ -613,8 +638,20 @@ function evaluateMove(row,col,card,player){
   return score;
 }
 
+/**
+ * Modified computerMove:
+ * - choose best move immediately (no heavy search)
+ * - preview the chosen card in the UI
+ * - wait a randomized think delay (700-1700ms)
+ * - before placing, re-check turn/AI status/validity and fallback if needed
+ */
 function computerMove(player){
   if (!player || player.cards.length===0 || gameState.gameOver) return;
+
+  // Cancel any previous timer for this player (defensive)
+  cancelAiTimerFor(player.id);
+
+  // pilih best move seperti sebelumnya
   let best = {score:-Infinity, row:null, col:null, cardIndex:null};
   for (let ci=0; ci<player.cards.length; ci++){
     const card = player.cards[ci];
@@ -628,17 +665,107 @@ function computerMove(player){
       }
     }
   }
-  if (best.cardIndex !== null){
-    performPlacement(player, best.cardIndex, best.row, best.col);
-    gameMessage.textContent = `${player.name} (AI) placed a card.`;
-  } else {
+
+  if (best.cardIndex === null){
     gameMessage.textContent = `${player.name} (AI) has no valid move and is skipped.`;
-    nextPlayer();
+    // beri sedikit jeda supaya terasa natural
+    setTimeout(()=> nextPlayer(), 350);
+    return;
   }
+
+  // tampilkan status thinking & preview selected card
+  gameMessage.textContent = `${player.name} (AI) is thinking...`;
+  showSelectedCardPreview(player.cards[best.cardIndex], player.id);
+
+  // tambahkan kelas highlight kecil di UI hand (jika ingin)
+  document.querySelectorAll(`#player${player.id}-cards .player-card`).forEach(el=>el.classList.remove('ai-selected'));
+  const cardEls = document.querySelectorAll(`#player${player.id}-cards .player-card`);
+  if (cardEls[best.cardIndex]) cardEls[best.cardIndex].classList.add('ai-selected');
+
+  // jeda berpikir acak: antara 700ms hingga 1700ms (bisa diubah)
+  const thinkMs = 700 + Math.floor(Math.random()*1000);
+
+  aiTimers[player.id] = setTimeout(()=>{
+    // sebelum menaruh kartu, re-cek kondisi: masih giliran player ini? masih AI? masih game jalan?
+    const cur = gameState.players[gameState.currentPlayerIndex];
+    if (!cur || !cur.isCurrent || cur.id !== player.id || gameState.gameOver || !aiPlayers[player.id]){
+      // batal: mungkin undo/reset/AI dimatikan, bersihkan preview & kelas
+      showSelectedCardPreview(null);
+      document.querySelectorAll(`#player${player.id}-cards .player-card`).forEach(el=>el.classList.remove('ai-selected'));
+      delete aiTimers[player.id];
+      return;
+    }
+
+    // juga re-cek bahwa card index masih valid (mis. undo atau draw mengubahnya)
+    if (!player.cards[best.cardIndex]){
+      // coba cari kartu yang paling mirip (fallback) — cari kartu dgn nilai sama/warna sama
+      let foundIndex = -1;
+      for (let k=0;k<player.cards.length;k++){
+        if (player.cards[k].value === (player.cards[best.cardIndex]?.value) && player.cards[k].color === (player.cards[best.cardIndex]?.color)){
+          foundIndex = k; break;
+        }
+      }
+      if (foundIndex === -1){
+        // tidak menemukan, abort & nextPlayer
+        showSelectedCardPreview(null);
+        document.querySelectorAll(`#player${player.id}-cards .player-card`).forEach(el=>el.classList.remove('ai-selected'));
+        delete aiTimers[player.id];
+        nextPlayer();
+        return;
+      } else {
+        best.cardIndex = foundIndex;
+      }
+    }
+
+    // pastikan posisi masih valid (stacking / adjacency mungkin berubah)
+    const chosenCard = player.cards[best.cardIndex];
+    if (!isValidMove(best.row, best.col, chosenCard)){
+      // jika posisi sekarang invalid, coba cari best valid lagi cepat
+      let newBest = {score:-Infinity, row:null, col:null, cardIndex:null};
+      for (let ci=0; ci<player.cards.length; ci++){
+        const card = player.cards[ci];
+        for (let r=0;r<9;r++){
+          for (let c=0;c<9;c++){
+            if (!isValidMove(r,c,card)) continue;
+            const sc = evaluateMove(r,c,card,player);
+            if (sc > newBest.score){
+              newBest.score = sc; newBest.row = r; newBest.col = c; newBest.cardIndex = ci;
+            }
+          }
+        }
+      }
+      if (newBest.cardIndex === null){
+        showSelectedCardPreview(null);
+        document.querySelectorAll(`#player${player.id}-cards .player-card`).forEach(el=>el.classList.remove('ai-selected'));
+        delete aiTimers[player.id];
+        nextPlayer();
+        return;
+      }
+      best = newBest;
+    }
+
+    // lakukan placement (final)
+    const placed = performPlacement(player, best.cardIndex, best.row, best.col);
+    if (placed){
+      gameMessage.textContent = `${player.name} (AI) placed a card.`;
+    } else {
+      gameMessage.textContent = `${player.name} (AI) attempted a move but it failed.`;
+    }
+
+    // bersihkan preview & highlight
+    showSelectedCardPreview(null);
+    document.querySelectorAll(`#player${player.id}-cards .player-card`).forEach(el=>el.classList.remove('ai-selected'));
+
+    delete aiTimers[player.id];
+
+  }, thinkMs);
 }
 
 // -------- Start / restart --------
 function startRestartGame(){
+  // cancel pending AI timers whenever we restart
+  cancelAllAiTimers();
+
   gameState.gameStarted = true;
   gameState.gameOver = false;
   gameState.firstMove = true;
@@ -653,44 +780,67 @@ function startRestartGame(){
   initializeBoard();
   initializePlayerCards();
   updateBoardDisplay();
-showSelectedCardPreview(null);
+  showSelectedCardPreview(null);
   currentPlayerDisplay.textContent = `${gameState.players[0].name}'s Turn`;
   gameMessage.textContent = "Game started! Player 1, place a card in center.";
   startRestartGameBtn.textContent = 'Reset Game';
   updateUndoRedoButtons();
 
   const cur = gameState.players[gameState.currentPlayerIndex];
-  if (aiPlayers[cur.id]) setTimeout(()=> computerMove(cur), 280);
+  if (aiPlayers[cur.id]) computerMove(cur);
 }
 
 // -------- Quick Play vs Computer logic (button handlers) --------
 startPvcBtn.addEventListener('click', ()=>{
+  cancelAllAiTimers();
   // Quick mode: Player 1 = human, Player 2 = AI; others remain human (unless checkboxes used)
   aiPlayers[1] = false;
   aiPlayers[2] = true;
   aiPlayers[3] = false;
   aiPlayers[4] = false;
   // sync the checkboxes UI
-  document.getElementById('ai-p1').checked = false;
-  document.getElementById('ai-p2').checked = true;
-  document.getElementById('ai-p3').checked = false;
-  document.getElementById('ai-p4').checked = false;
+  const cb1 = document.getElementById('ai-p1');
+  const cb2 = document.getElementById('ai-p2');
+  const cb3 = document.getElementById('ai-p3');
+  const cb4 = document.getElementById('ai-p4');
+  if (cb1) cb1.checked = false;
+  if (cb2) cb2.checked = true;
+  if (cb3) cb3.checked = false;
+  if (cb4) cb4.checked = false;
+
   gameMessage.textContent = "Mode: Player 1 vs Computer (Player 2). Starting game...";
   startRestartGame();
 });
 
 stopPvcBtn.addEventListener('click', ()=>{
-  // Turn off all quick AI flags (but keep any manually checked ones off too)
+  cancelAllAiTimers();
+  // Turn off all quick AI flags
   aiPlayers[1] = false; aiPlayers[2] = false; aiPlayers[3] = false; aiPlayers[4] = false;
-  document.getElementById('ai-p1').checked = false;
-  document.getElementById('ai-p2').checked = false;
-  document.getElementById('ai-p3').checked = false;
-  document.getElementById('ai-p4').checked = false;
+  const cb1 = document.getElementById('ai-p1');
+  const cb2 = document.getElementById('ai-p2');
+  const cb3 = document.getElementById('ai-p3');
+  const cb4 = document.getElementById('ai-p4');
+  if (cb1) cb1.checked = false;
+  if (cb2) cb2.checked = false;
+  if (cb3) cb3.checked = false;
+  if (cb4) cb4.checked = false;
+
   gameMessage.textContent = "AI mode stopped. All players set to human. Resetting game...";
   startRestartGame();
 });
 
 // -------- Event listeners & init --------
+// replace original simple listeners so we can cancel timers on uncheck
+const cbp1 = document.getElementById('ai-p1');
+const cbp2 = document.getElementById('ai-p2');
+const cbp3 = document.getElementById('ai-p3');
+const cbp4 = document.getElementById('ai-p4');
+
+if (cbp1) cbp1.addEventListener('change', e => { aiPlayers[1] = e.target.checked; if (!e.target.checked) cancelAiTimerFor(1); });
+if (cbp2) cbp2.addEventListener('change', e => { aiPlayers[2] = e.target.checked; if (!e.target.checked) cancelAiTimerFor(2); });
+if (cbp3) cbp3.addEventListener('change', e => { aiPlayers[3] = e.target.checked; if (!e.target.checked) cancelAiTimerFor(3); });
+if (cbp4) cbp4.addEventListener('change', e => { aiPlayers[4] = e.target.checked; if (!e.target.checked) cancelAiTimerFor(4); });
+
 startRestartGameBtn.addEventListener('click', startRestartGame);
 rulesBtn.addEventListener('click', ()=>{
   gameState.rulesVisible = !gameState.rulesVisible;
@@ -782,11 +932,16 @@ function setupBGM(){
       p.then(() => { started = true; ramp(0.5, 700); }).catch(()=>{});
     } else { started = true; ramp(0.5, 700); }
 
-    // lepaskan listener setelah mulai
     ['click','dblclick','mousemove','keydown'].forEach(ev => window.removeEventListener(ev, tryPlay));
   }
 
-  // mulai setelah gesture pertama (aturan browser)
   ['click','dblclick','mousemove','keydown'].forEach(ev => window.addEventListener(ev, tryPlay, {passive:true}));
 }
 
+// If needed, expose helpers for debugging
+window.__PUNTO = {
+  gameState,
+  aiPlayers,
+  cancelAllAiTimers,
+  cancelAiTimerFor
+};
