@@ -242,11 +242,24 @@ function updatePlayerCardsDisplay(player){
     badge.textContent = card.value;
     el.appendChild(badge);
     el.addEventListener('click', ()=> handleCardSelect(player.id, idx));
+    // 💡 Efek ukuran khusus untuk Player 4
+    // 💡 Efek ukuran khusus untuk Player 4
+    if (player.id === 4) {
+      // 🔹 Kartu 3, 4, 5 → lebih kecil
+      if ([3, 4, 5, 7].includes(card.value)) {
+        img.style.transform = 'scale(0.80)';
+        img.style.opacity = '0.95';
+      }
 
-    // 💡 Tambahkan ini (contoh highlight khusus)
-    if (player.id === 4 && card.value === 9) {
-      el.classList.add('special-card');
+      // 🔸 Kartu 1 & 9 → lebih besar
+      if ([1, 9].includes(card.value)) {
+        img.style.transform = 'scale(1.10)';
+        img.style.zIndex = '3'; // tampil di atas sedikit
+        img.style.filter = 'drop-shadow(0 0 6px rgba(255,255,255,0.4))';
+      }
     }
+
+
 
     container.appendChild(el);
   });

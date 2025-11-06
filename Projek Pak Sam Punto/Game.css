@@ -593,3 +593,55 @@ html.custom-cursor-active, body.custom-cursor-active { cursor: none !important; 
   }
   @keyframes aiPulse { 0% { opacity:1 } 100% { opacity:1 } }
 }
+
+/* === Soft color tint per player (semi-transparent overlay) === */
+.card.red::before,
+.player-card.red::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(207, 15, 224, 0.358); /* merah lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card.blue::before,
+.player-card.blue::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(140, 194, 244, 0.788); /* biru lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card.yellow::before,
+.player-card.yellow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 231, 137, 0.71); /* kuning lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card.green::before,
+.player-card.green::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(130, 241, 180, 0.861); /* hijau lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Pastikan gambar kartu tetap di atas overlay */
+.card img,
+.player-card img {
+  position: relative;
+  z-index: 2;
+}
