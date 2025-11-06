@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Papan — Player 1 Panel (Drag & Drop)</title>
+
+  <link rel="stylesheet" href="ifpy1.css" />
+  <style>
+    /* keep cursor hidden safety (optional) */
+    html.custom-cursor-active, body.custom-cursor-active { cursor: none !important; }
+    #customCursor{ position: fixed; left:0; top:0; transform:translate(-50%,-50%); pointer-events:none; z-index:99999; opacity:0; }
+    #customCursor img{ width:40px; }
+    @media (pointer: coarse){ #customCursor{ display:none !important } html.custom-cursor-active, body.custom-cursor-active{ cursor:auto !important } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Papan - Demo UI (Drag & Drop)</h1>
+    </header>
+
+    <main class="game-area" role="main">
+      <!-- LEFT: board -->
+      <section class="left-column" aria-label="Papan">
+        <div class="board-container">
+          <div id="game-board" class="board" role="grid" aria-label="Papan 9x9"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: controls panel (player cards + buttons) -->
+      <aside class="controls" aria-label="Panel kontrol">
+        <div class="controls-panel simple-buttons">
+
+          <!-- Player cards (draggable) -->
+          <div class="player-cards-panel" aria-label="Player 1 cards">
+            <div class="player-cards-header">
+              <div class="player-title">Player 1</div>
+            </div>
+            <div id="control-player-cards" class="player-cards"></div>
+            <!-- CLOCK & COOLDOWN (paste ini di antara player-cards-panel dan controls-buttons) -->
+
+          </div>
+
+          <!-- Buttons -->
+          <div class="controls-buttons" role="toolbar" aria-label="Tombol panel">
+            <button id="btn-sample" class="btn-small">Tombol Contoh</button>
+            <button id="btn-reset" class="btn-small">Reset Papan</button>
+          </div>
+
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- optional UI cursor (hidden by CSS) -->
+  <div id="customCursor" aria-hidden="true"><img src="krusor1.png" alt="cursor" /></div>
+
+  <!-- optional bgm -->
+  <audio id="bgm" src="tess1.mp3" preload="auto" loop></audio>
+
+  <script src="ifpy1.js" defer></script>
+</body>
+</html>

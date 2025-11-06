@@ -1,0 +1,405 @@
+/* ===== Clean & tidy layout for the demo UI ===== */
+:root{
+  --max-width:1400px;
+  --panel-w: 380px;
+  --muted: #6d6d6d;
+  --card-shadow: 0 8px 22px rgba(0,0,0,0.07);
+}
+
+/* Reset */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:Inter, "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial}
+body{
+  min-height:100vh;
+  background: url("gmbg.png") center/cover no-repeat fixed;
+  color:#111;
+}
+
+/* Container */
+.container{max-width:var(--max-width);margin:18px auto;padding:12px}
+header{text-align:center;margin-bottom:8px}
+h1{font-size:1.35rem;color:#6b2b57;letter-spacing:.2px}
+
+/* Layout */
+.game-area{display:flex;gap:22px;align-items:flex-start;justify-content:center}
+
+/* LEFT column (board at left) */
+.left-column{flex:1 1 auto;display:flex;flex-direction:column;gap:16px;align-items:center;padding-top:10px}
+
+/* Board container */
+.board-container{width:680px;max-width:calc(100vw - var(--panel-w) - 80px);display:flex;justify-content:center;align-items:center}
+.board{
+  width:680px;
+  aspect-ratio:1/1;
+  background: transparent;
+  border-radius:14px;
+  padding:14px;
+  display:grid;
+  grid-template-columns:repeat(9,1fr);
+  grid-auto-rows:1fr;
+  gap:10px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.06);
+  border: 4px solid rgba(255,192,203,0.06);
+}
+
+/* cell */
+.cell{
+  background: rgba(255,255,255,0.03);
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.cell.center{ background: rgba(255,182,193,0.06); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.02); }
+.cell:hover{ transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+
+/* demo dot (if used) */
+.cell .dot{ width:12px;height:12px;border-radius:50%; background: rgba(111,33,82,0.95); box-shadow:0 6px 14px rgba(0,0,0,0.12); }
+
+/* placed card inside cell (when a card is dropped) */
+.cell .placed-card{
+  width:86%;
+  height:86%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+.cell .placed-card img{ width:100%; height:auto; object-fit:contain; pointer-events:none; user-select:none; }
+.cell .placed-card .card-number{
+  position:absolute; bottom:6px; left:50%; transform:translateX(-50%); background:rgba(255,255,255,0.95); padding:3px 6px; border-radius:8px; font-weight:800; color:#c94a6b; font-size:0.88rem;
+}
+
+/* RIGHT panel */
+.controls{ width:var(--panel-w); flex:none; display:flex; justify-content:flex-end; align-items:flex-start }
+.controls-panel{
+  width:100%;
+  min-width:320px;
+  max-width:var(--panel-w);
+  min-height:460px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,252,0.98));
+  border-radius:16px;
+  padding:14px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.12);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  justify-content:space-between;
+  align-items:center;
+  box-sizing:border-box;
+  position:relative;
+  overflow:visible;
+}
+
+/* Player cards panel inside right panel */
+.player-cards-panel{ width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding-top:4px; box-sizing:border-box }
+.player-cards-header{ width:92%; display:flex; justify-content:space-between; align-items:center; padding:0 6px }
+.player-title{ font-weight:800; color:#6b2b57; font-size:0.95rem }
+.player-sub{ font-size:0.78rem; color:rgba(0,0,0,0.45) }
+
+/* white strip holding the cards */
+.player-cards{
+  width:92%;
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  align-items:center;
+  padding:10px;
+  background: linear-gradient(180deg,#fff,#fbfbfd);
+  border-radius:10px;
+  box-shadow: var(--card-shadow);
+  box-sizing:border-box;
+}
+
+/* single player-card (mini) - draggable */
+.player-cards .player-card{
+  position:relative;
+  width:86px;
+  height:98px;
+  border-radius:10px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.player-cards .player-card img{ width:86%; height:auto; object-fit:contain; pointer-events:none; user-select:none; }
+.player-cards .player-card .card-number{
+  position:absolute; bottom:6px; left:50%; transform:translateX(-50%); background:rgba(255,255,255,0.95); padding:3px 6px; border-radius:8px; font-weight:800; color:#c94a6b; font-size:0.88rem;
+}
+.player-cards .player-card:hover{ transform: translateY(-6px) scale(1.03); box-shadow:0 12px 30px rgba(0,0,0,0.12); }
+
+/* Buttons area (bottom) */
+.controls-buttons{ width:100%; display:flex; flex-direction:column; gap:10px; align-items:center; padding:6px 6px 12px 6px; box-sizing:border-box }
+.btn-small{ width:78%; padding:9px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; background: linear-gradient(180deg,#ffdfe8,#ffb8d1); color:#2b1020; box-shadow: 0 8px 18px rgba(200,80,120,0.08); }
+
+/* hide custom cursor sprite for cleaner look */
+#customCursor{ display:none !important; }
+
+/* responsive */
+@media (max-width:1100px){
+  .game-area{ flex-direction:column; align-items:center; gap:14px }
+  .controls{ order:2; width:92%; justify-content:center }
+  .controls-panel{ width:92%; max-width:92vw; min-height:240px }
+  .board{ max-width:92vw; width:92vw }
+  .player-cards{ width:96% }
+}
+/* ---- stronger board & cell visuals (revert to original look) ---- */
+.board{
+  width:680px;
+  aspect-ratio:1/1;
+  /* kembali ke background putih semi-transparan */
+  background: rgba(255,255,255,0.28);
+  border-radius:14px;
+  padding:14px;
+  display:grid;
+  grid-template-columns:repeat(9,1fr);
+  grid-auto-rows:1fr;
+  gap:8px;
+  /* lebih tegas shadow & pink border */
+  box-shadow: 0 18px 46px rgba(0,0,0,0.10);
+  border: 6px solid rgba(255,192,203,0.32);
+}
+
+/* tiap kotak sel lebih terlihat */
+.cell{
+  background: rgba(255, 245, 250, 0.65); /* kurang transparan */
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+/* sel tengah lebih jelas */
+.cell.center{
+  background: rgba(255,182,193,0.42);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18);
+}
+
+/* hover sedikit lebih tegas */
+.cell:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+}
+
+/* placed-card lebih kontras supaya kelihatan di atas board */
+.cell .placed-card{
+  width:90%;
+  height:90%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.10));
+}
+.cell .placed-card img{ width:100%; height:auto; object-fit:contain; }
+
+
+/* ===== FIX: paksa board kiri dan panel berada di kanan (tidak di tengah/bawah) ===== */
+
+/* main layout - single row, no wrapping */
+.game-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;   /* semua mulai dari atas */
+  justify-content: center;   /* tetap tengah halaman, tapi items side-by-side */
+  gap: 40px;
+  flex-wrap: nowrap;         /* penting: jangan biarkan panel turun ke baris bawah */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 24px;        /* beri sedikit ruang samping */
+}
+
+/* left column: beri fixed width agar board tidak 'mengambil' seluruh baris */
+.left-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 720px;           /* tetap 720px lebar — cukup untuk board */
+  box-sizing: border-box;
+}
+
+/* board container tetap centering di dalam left-column */
+.board-container {
+  width: 680px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* board visual (jika kamu ingin sesuaikan ukuran, ubah width di sini) */
+.board {
+  width: 680px;
+  aspect-ratio: 1/1;
+  background: rgba(255,255,255,0.28);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  box-shadow: 0 18px 46px rgba(0,0,0,0.10);
+  border: 6px solid rgba(255,192,203,0.32);
+}
+
+/* controls (panel kanan) — pastikan ditempatkan di kanan papan */
+.controls {
+  flex: 0 0 360px;          /* panel lebar 360px */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-top: 20px;         /* sedikit turun agar nggak terlalu atas */
+  box-sizing: border-box;
+  /* jangan gunakan align-self:center atau margin auto vertikal */
+}
+
+/* internal panel sizing */
+.controls-panel {
+  width: 100%;
+  min-height: 420px;
+  padding: 14px;
+  box-sizing: border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content: space-between;
+  gap:12px;
+}
+
+/* responsive: kalau layar sempit, stack secara vertikal */
+@media (max-width:1100px){
+  .game-area{ flex-direction: column; align-items:center; gap:18px; flex-wrap:wrap; padding:10px; }
+  .left-column{ flex: 0 0 auto; width: 92vw; max-width:92vw; }
+  .controls{ flex: 0 0 auto; width: 92vw; margin-top: 0; }
+  .board{ width:92vw; max-width:92vw; }
+}
+
+
+/* ==== tint semi-transparent per player (overlay) ==== */
+.player-card.red::before,
+.card.red::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(207, 15, 224, 0.18); /* merah lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+.player-card.blue::before,
+.card.blue::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(56, 140, 255, 0.12); /* biru lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+.player-card.yellow::before,
+.card.yellow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 200, 70, 0.12); /* kuning lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+.player-card.green::before,
+.card.green::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(88, 230, 160, 0.12); /* hijau lembut */
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ==== differentiate active hand vs deck visuals ==== */
+.player-card.in-hand {
+  opacity: 1;
+  transform: none;
+  cursor: pointer;
+  filter: none;
+  z-index: 5;
+}
+.player-card.in-hand .card-number { color: #ff3a52; }
+
+.player-card.in-deck {
+  opacity: 0.42; /* lebih pudar */
+  cursor: default;
+  transform: translateY(0);
+  box-shadow: none;
+  z-index: 2;
+  filter: grayscale(6%);
+}
+
+/* layout grid: tampil sebagai rows dengan 3 item per baris */
+.player-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(56px, 1fr));
+  gap: 10px;
+  width: 100%;
+  align-items: start;
+  justify-items: center;
+  padding: 8px;
+}
+
+/* badge tetap di atas layer agar terlihat */
+.player-card .card-number { z-index: 6; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); }
+
+/* highlight ketika dipilih */
+.player-card.selected {
+  outline: 3px solid rgba(255,230,240,0.85);
+  transform: translateY(-6px) scale(1.06);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+
+/* responsive safety */
+@media (max-width:480px){
+  .player-cards { grid-template-columns: repeat(3, minmax(44px, 1fr)); gap:8px; }
+  .player-card { width:54px; height:72px; }
+}
+
+
+/* in-hand vs in-deck visuals */
+.player-card.in-hand {
+  opacity: 1;
+  cursor: pointer;
+  transform: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+  z-index: 4;
+}
+.player-card.in-deck {
+  opacity: 0.42;
+  cursor: default;
+  filter: grayscale(.04);
+  transform: none;
+  box-shadow: none;
+  z-index: 1;
+}
+
+/* tint overlays by color */
+.player-card.red::before, .card.red::before { content:""; position:absolute; inset:0; background: rgba(207,15,224,0.18); border-radius:inherit; z-index:2; pointer-events:none; }
+.player-card.blue::before, .card.blue::before { content:""; position:absolute; inset:0; background: rgba(56,140,255,0.12); border-radius:inherit; z-index:2; pointer-events:none; }
+.player-card.yellow::before, .card.yellow::before { content:""; position:absolute; inset:0; background: rgba(255,200,70,0.12); border-radius:inherit; z-index:2; pointer-events:none; }
+.player-card.green::before, .card.green::before { content:""; position:absolute; inset:0; background: rgba(88,230,160,0.12); border-radius:inherit; z-index:2; pointer-events:none; }
+
+/* selected card highlight */
+.player-card.selected { outline: 3px solid rgba(255,230,240,0.85); transform: translateY(-6px) scale(1.04); box-shadow: 0 12px 28px rgba(0,0,0,0.16); z-index:6; }
+
+/* cari dan hapus atau ubah bagian ini (opsional) */
+.cell .placed-card .card-number{
+  position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+  background:rgba(255,255,255,0.95); padding:3px 6px; border-radius:8px; font-weight:800; color:#c94a6b; font-size:0.88rem;
+}
+
