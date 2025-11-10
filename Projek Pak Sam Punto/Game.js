@@ -40,6 +40,12 @@ function cancelAiTimerFor(playerId){
   }
 }
 
+// ===== AI timing configuration (tweak these) =====
+const AI_THINK_MIN_MS = 800;   // min delay for AI thinking (ms)
+const AI_THINK_MAX_MS = 1850;  // max delay for AI thinking (ms)
+const AI_SKIP_DELAY_MS = 450;  // delay when AI has no valid move (ms)
+const NEXTPLAYER_UI_DELAY_MS = 120; // micro-delay before AI starts after UI update
+
 // DOM refs (assume script deferred so DOM exists)
 const gameBoard = document.getElementById('game-board');
 let gameMessage = document.getElementById('game-message');
@@ -243,9 +249,8 @@ function updatePlayerCardsDisplay(player){
     el.appendChild(badge);
     el.addEventListener('click', ()=> handleCardSelect(player.id, idx));
     // 💡 Efek ukuran khusus untuk Player 4
-    // 💡 Efek ukuran khusus untuk Player 4
     if (player.id === 4) {
-      // 🔹 Kartu 3, 4, 5 → lebih kecil
+      // 🔹 Kartu 3, 4, 5, 7 → lebih kecil
       if ([3, 4, 5, 7].includes(card.value)) {
         img.style.transform = 'scale(0.80)';
         img.style.opacity = '0.95';
@@ -258,8 +263,6 @@ function updatePlayerCardsDisplay(player){
         img.style.filter = 'drop-shadow(0 0 6px rgba(255,255,255,0.4))';
       }
     }
-
-
 
     container.appendChild(el);
   });
@@ -547,14 +550,26 @@ function nextPlayer(){
   updatePlayerHighlights();
   updateCurrentPlayerDisplay();
   gameMessage.textContent = `${gameState.players[gameState.currentPlayerIndex].name}'s turn. Select a card.`;
+
   if (gameState.players[gameState.currentPlayerIndex].cards.length===0){
-    nextPlayer();
+    // jika hand kosong, langsung lanjutkan ke pemain berikutnya
+    setTimeout(()=> nextPlayer(), 150);
     return;
   }
+
   const cur = gameState.players[gameState.currentPlayerIndex];
   if (aiPlayers[cur.id] && !gameState.gameOver){
-    // let computerMove decide its own timer (it cancels previous timers)
-    computerMove(cur);
+    // selesaikan timer lama jika ada
+    cancelAiTimerFor(cur.id);
+
+    // beri sedikit delay supaya UI sempat update (teks/highlight)
+    aiTimers[cur.id] = setTimeout(()=>{
+      delete aiTimers[cur.id];
+      // pastikan tidak di-cancel di tengah
+      if (!gameState.gameOver && aiPlayers[cur.id] && gameState.players[gameState.currentPlayerIndex].id === cur.id){
+        computerMove(cur);
+      }
+    }, NEXTPLAYER_UI_DELAY_MS);
   }
 }
 
@@ -655,16 +670,16 @@ function evaluateMove(row,col,card,player){
  * Modified computerMove:
  * - choose best move immediately (no heavy search)
  * - preview the chosen card in the UI
- * - wait a randomized think delay (700-1700ms)
+ * - wait a randomized think delay
  * - before placing, re-check turn/AI status/validity and fallback if needed
  */
 function computerMove(player){
   if (!player || player.cards.length===0 || gameState.gameOver) return;
 
-  // Cancel any previous timer for this player (defensive)
+  // Cancel any previous timer for this player
   cancelAiTimerFor(player.id);
 
-  // pilih best move seperti sebelumnya
+  // pilih best move
   let best = {score:-Infinity, row:null, col:null, cardIndex:null};
   for (let ci=0; ci<player.cards.length; ci++){
     const card = player.cards[ci];
@@ -680,9 +695,19 @@ function computerMove(player){
   }
 
   if (best.cardIndex === null){
-    gameMessage.textContent = `${player.name} (AI) has no valid move and is skipped.`;
-    // beri sedikit jeda supaya terasa natural
-    setTimeout(()=> nextPlayer(), 350);
+    // Tidak ada langkah valid — beri jeda kecil supaya terasa "memikirkan" lalu skip
+    gameMessage.textContent = `${player.name} (AI) is thinking...`;
+    showSelectedCardPreview(null);
+    aiTimers[player.id] = setTimeout(()=>{
+      // sebelum nextPlayer re-check kondisi
+      if (!gameState.gameOver && aiPlayers[player.id] && gameState.players[gameState.currentPlayerIndex].id === player.id){
+        gameMessage.textContent = `${player.name} (AI) has no valid move and is skipped.`;
+        delete aiTimers[player.id];
+        nextPlayer();
+      } else {
+        delete aiTimers[player.id];
+      }
+    }, AI_SKIP_DELAY_MS);
     return;
   }
 
@@ -695,9 +720,10 @@ function computerMove(player){
   const cardEls = document.querySelectorAll(`#player${player.id}-cards .player-card`);
   if (cardEls[best.cardIndex]) cardEls[best.cardIndex].classList.add('ai-selected');
 
-  // jeda berpikir acak: antara 700ms hingga 1700ms (bisa diubah)
-  const thinkMs = 700 + Math.floor(Math.random()*1000);
+  // jeda berpikir acak: antara AI_THINK_MIN_MS hingga AI_THINK_MAX_MS
+  const thinkMs = AI_THINK_MIN_MS + Math.floor(Math.random() * (AI_THINK_MAX_MS - AI_THINK_MIN_MS + 1));
 
+  // simpan timer supaya bisa dibatalkan (undo / switch off AI)
   aiTimers[player.id] = setTimeout(()=>{
     // sebelum menaruh kartu, re-cek kondisi: masih giliran player ini? masih AI? masih game jalan?
     const cur = gameState.players[gameState.currentPlayerIndex];
@@ -710,11 +736,14 @@ function computerMove(player){
     }
 
     // juga re-cek bahwa card index masih valid (mis. undo atau draw mengubahnya)
+    // to avoid reading undefined best.cardIndex after array changes, capture original card snapshot
+    const originalBestCard = player.cards[best.cardIndex] ? { value: player.cards[best.cardIndex].value, color: player.cards[best.cardIndex].color } : null;
+
     if (!player.cards[best.cardIndex]){
-      // coba cari kartu yang paling mirip (fallback) — cari kartu dgn nilai sama/warna sama
+      // try to find similar card fallback
       let foundIndex = -1;
       for (let k=0;k<player.cards.length;k++){
-        if (player.cards[k].value === (player.cards[best.cardIndex]?.value) && player.cards[k].color === (player.cards[best.cardIndex]?.color)){
+        if (originalBestCard && player.cards[k].value === originalBestCard.value && player.cards[k].color === originalBestCard.color){
           foundIndex = k; break;
         }
       }
@@ -958,5 +987,3 @@ window.__PUNTO = {
   cancelAllAiTimers,
   cancelAiTimerFor
 };
-
-
