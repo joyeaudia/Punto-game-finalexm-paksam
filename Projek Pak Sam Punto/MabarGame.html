@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Punto — Final (AI + 18-card decks + Play vs Computer button)</title>
+
+  <!-- external stylesheet -->
+  <link rel="stylesheet" href="Game.css" />
+  <style>
+    /* ===== Minimal CSS untuk custom cursor (biar gak perlu otak-atik Game.css) ===== */
+    html.custom-cursor-active, body.custom-cursor-active { cursor: none !important; }
+    #customCursor{
+      position: fixed; left: 0; top: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none; z-index: 99999;
+      transition: transform 0.05s linear, opacity 0.12s linear;
+      opacity: 0; will-change: transform, opacity;
+    }
+    #customCursor img{ width: 48px; height: auto; user-select: none; display: block; }
+    #customCursor.click img{ transform: scale(0.9); }
+    @media (pointer: coarse){
+      #customCursor{ display:none !important; }
+      html.custom-cursor-active, body.custom-cursor-active { cursor:auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="game-area">
+      <div class="board-container">
+        <div class="board" id="game-board"></div>
+      </div>
+
+      <div class="controls">
+        <!-- PLAYER GRID (tetap di tempat, tidak ikut bergeser) -->
+        <div class="game-info" id="players-row">
+          <div class="player-info" id="player1">
+            <div class="player-name">Player 1</div>
+            <div class="player-cards" id="player1-cards"></div>
+          </div>
+          <div class="player-info" id="player2">
+            <div class="player-name">Player 2</div>
+            <div class="player-cards" id="player2-cards"></div>
+          </div>
+          <div class="player-info" id="player3">
+            <div class="player-name">Player 3</div>
+            <div class="player-cards" id="player3-cards"></div>
+          </div>
+          <div class="player-info" id="player4">
+            <div class="player-name">Player 4</div>
+            <div class="player-cards" id="player4-cards"></div>
+          </div>
+        </div>
+
+        <!-- NEW: controls panel (semua yang mau dipindahkan) -->
+        <div class="controls-panel">
+          <div class="multiplayer-block">
+          <h3>Multiplayer</h3>
+          <button id="create-room-btn">Create Room</button>
+          <input id="room-code-input" placeholder="Enter room code" />
+          <button id="join-room-btn">Join Room</button>
+          <div id="room-info"></div>
+        </div>
+
+          <div class="selected-card-block">
+            <h3>Selected Card</h3>
+            <!-- kosongkan biar placeholder CSS ::before jalan -->
+            <div id="selected-card-display"></div>
+          </div>
+
+          <div class="status-block">
+            <h3>Game Status</h3>
+            <div id="current-player">Player 1's Turn</div>
+            <div id="game-message"></div> 
+          </div>
+
+          <div class="ai-controls">
+            <h3>AI Players</h3>
+            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p1"> Player 1 (red)</label>
+            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p2"> Player 2 (blue)</label>
+            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p3"> Player 3 (yellow)</label>
+            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p4"> Player 4 (green)</label>
+            <small style="opacity:.8;display:block;margin-top:6px">Checkboxes let you set any player(s) to AI. Or use the quick buttons below.</small>
+
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <button id="start-pvc" style="flex:1">Play vs Computer</button>
+              <button id="stop-pvc" style="flex:1;background:linear-gradient(135deg,#c0392b,#e74c3c)">Stop AI Mode</button>
+            </div>
+          </div>
+
+          <div class="controls-buttons">
+            <div class="undo-redo-buttons"><button id="undo-btn" disabled>Undo</button><button id="redo-btn" disabled>Redo</button></div>
+            <button id="start-restart-game">Reset Game</button>
+            <button id="rules-btn">Show Rules</button>
+          </div>
+        </div>
+        <!-- end .controls-panel -->
+
+      </div> <!-- end .controls -->
+    </div> <!-- end .game-area -->
+
+    <div class="rules" id="rules-panel">
+      <h2>Game Rules</h2>
+      <ul>
+        <li>2–4 players, board 9×9.</li>
+        <li>Each color has 18 cards (two sets of 1–9). Demo deals 3 cards to start.</li>
+        <li>First move must be center (4,4). After that, place adjacent or stack on lower value.</li>
+        <li>Win by placing 4 same-color cards in a row (horizontal, vertical, diagonal).</li>
+        <li>Each placement: draw one card from your deck (if available).</li>
+      </ul>
+    </div>
+
+  </div> <!-- end .container -->
+
+  <!-- Custom cursor (PNG) -->
+  <div id="customCursor" aria-hidden="true">
+    <img src="krusor1.png" alt="cursor" />
+  </div>
+
+  <!-- Background music -->
+  <audio id="bgm" src="tess1.mp3" preload="auto" loop></audio>
+
+  <!-- external script (defer so DOM exists) -->
+   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <script src="MabarGame.js" defer></script>
+
+  <!-- In-page setup untuk cursor + BGM -->
+  <script>
+    (function(){
+      function setupCustomCursor(){
+        const cursor = document.getElementById('customCursor');
+        if (!cursor) return;
+        const img = cursor.querySelector('img');
+
+        // disable di device sentuh
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isTouch) {
+          cursor.style.display = 'none';
+          document.documentElement.classList.remove('custom-cursor-active');
+          document.body.classList.remove('custom-cursor-active');
+          return;
+        }
+
+        document.documentElement.classList.add('custom-cursor-active');
+        document.body.classList.add('custom-cursor-active');
+
+        let shown = false;
+        function move(e){
+          cursor.style.left = e.clientX + 'px';
+          cursor.style.top  = e.clientY + 'px';
+        }
+        function showOnce(e){
+          if (!shown){ cursor.style.opacity = '1'; shown = true; window.removeEventListener('mousemove', showOnce); }
+          move(e);
+        }
+
+        window.addEventListener('mousemove', showOnce, {passive:true});
+        window.addEventListener('mousemove', move, {passive:true});
+        window.addEventListener('mousedown', () => cursor.classList.add('click'));
+        window.addEventListener('mouseup',   () => cursor.classList.remove('click'));
+
+        // opsional: ganti gambar saat double click lalu kembali
+        const normal = 'krusor1.png';
+        const dbl    = 'krusor2.png';
+        let backTimer;
+        window.addEventListener('dblclick', () => {
+          if (!img) return;
+          img.src = dbl;
+          clearTimeout(backTimer);
+          backTimer = setTimeout(() => { img.src = normal; }, 800);
+        });
+
+        // sembunyikan saat mouse keluar window
+        window.addEventListener('mouseout', ev => { if (!ev.relatedTarget) cursor.style.opacity = '0'; });
+        window.addEventListener('mouseover', () => { if (shown) cursor.style.opacity = '1'; });
+      }
+
+      function setupBGM(){
+        const bgm = document.getElementById('bgm');
+        if (!bgm) return;
+        bgm.volume = 0.0;
+        bgm.loop = true;
+        bgm.preload = 'auto';
+
+        let started = false, rampTimer = null;
+
+        function ramp(to = 0.5, dur = 700){
+          if (rampTimer) clearInterval(rampTimer);
+          const steps = 20, stepMs = Math.max(20, Math.floor(dur/steps));
+          const start = bgm.volume, delta = to - start;
+          let i = 0;
+          rampTimer = setInterval(() => {
+            i++;
+            bgm.volume = Math.min(1, Math.max(0, start + delta * (i/steps)));
+            if (i >= steps){ clearInterval(rampTimer); rampTimer = null; }
+          }, stepMs);
+        }
+
+        function tryPlay(){
+          if (started) return;
+          const p = bgm.play();
+          if (p && typeof p.then === 'function'){
+            p.then(() => { started = true; ramp(0.5, 700); }).catch(()=>{});
+          } else { started = true; ramp(0.5, 700); }
+
+          ['click','dblclick','mousemove','keydown'].forEach(ev => window.removeEventListener(ev, tryPlay));
+        }
+
+        // mulai setelah gesture pertama (aturan browser)
+        ['click','dblclick','mousemove','keydown'].forEach(ev => window.addEventListener(ev, tryPlay, {passive:true}));
+      }
+
+      // Jalankan setelah DOM siap (Game.js pakai defer, jadi aman)
+      document.addEventListener('DOMContentLoaded', function(){
+        setupCustomCursor();
+        setupBGM();
+      });
+    })();
+  </script>
+</body>
+</html>

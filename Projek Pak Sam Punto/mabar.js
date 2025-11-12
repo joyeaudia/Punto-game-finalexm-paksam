@@ -138,16 +138,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function createServerRoom(code) {
+  return new Promise((resolve, reject) => {
+    const socket = io("https://5bf1e889-0f49-4505-abe7-df4e1d9da94d-00-111lj6mjzmah5.kirk.replit.dev/");
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to server, creating room:", code);
+      socket.emit("createRoom", code);
+
+      // Wait a bit to ensure the server processes it
+      setTimeout(() => {
+        socket.disconnect();
+        console.log("📡 Room created and socket closed");
+        resolve();
+      }, 400);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Failed to connect to server:", err);
+      reject(err);
+    });
+  });
+}
+
+
   // redirect to room (placeholder)
-  function gotoRoomWithCode(code) {
+  function gotoRoomWithCode(code, asHost = false) {
     const sanitized = String(code).replace(/\D/g, '');
     if (!sanitized) {
       showToast("Kode tidak valid.");
       return;
     }
-    // go to room.html?room=CODE
-    window.location.href = `room.html?room=${encodeURIComponent(sanitized)}`;
+    const params = new URLSearchParams();
+    params.set("room", sanitized);
+    if (asHost) params.set("host", "1"); // Add host flag only for creator
+    window.location.href = `MabarGame.html?${params.toString()}`;
   }
+
 
   // open invite modal and generate code
   function openInviteModal() {
@@ -203,14 +230,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // invite -> go to room
+  // Host: when user clicks "Lanjut ke Room"
   if (inviteGoRoomBtn && inviteCodeEl) {
-    inviteGoRoomBtn.addEventListener("click", () => {
+    inviteGoRoomBtn.addEventListener("click", async () => {
       const code = inviteCodeEl.textContent.trim();
-      gotoRoomWithCode(code);
+      const gameLink = `${window.location.origin}/MabarGame.html?room=${encodeURIComponent(code)}`;
+      try {
+        await copyText(gameLink);
+        showToast("Link disalin! Kirim ke temanmu 😉");
+      } catch (err) {
+        console.warn("Gagal menyalin link:", err);
+        showToast("Gagal menyalin, salin manual.");
+      }
+
+      // 👇 Go to room as host (adds &host=1)
+      gotoRoomWithCode(code, true);
     });
   }
 
-  // join modal: go
+  // Guest: when joining manually
   if (joinGoBtn && joinInput) {
     joinGoBtn.addEventListener("click", () => {
       const raw = joinInput.value.trim();
@@ -219,7 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast('Masukkan kode 6 digit yang valid.');
         return;
       }
-      gotoRoomWithCode(code);
+
+      // 👇 Go to room WITHOUT host flag
+      gotoRoomWithCode(code, false);
     });
   }
 
