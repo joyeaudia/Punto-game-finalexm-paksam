@@ -80,19 +80,14 @@
             <div id="game-message" style="margin-top: 10px;"></div> 
           </div>
 
-          <div class="ai-controls">
-            <h3>AI Players</h3>
-            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p1"> Player 1 (red)</label>
-            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p2"> Player 2 (blue)</label>
-            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p3"> Player 3 (yellow)</label>
-            <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ai-p4"> Player 4 (green)</label>
-            <small style="opacity:.8;display:block;margin-top:6px">Checkboxes let you set any player(s) to AI. Or use the quick buttons below.</small>
-
-            <div style="display:flex;gap:10px;margin-top:8px">
-              <button id="start-pvc" style="flex:1">Play vs Computer</button>
-              <button id="stop-pvc" style="flex:1;background:linear-gradient(135deg,#c0392b,#e74c3c)">Stop AI Mode</button>
-            </div>
+        <div class="ai-controls">
+          <h3>AI Players</h3>
+          <div id="ai-status" style="margin-bottom: 10px;">No AI players added.</div>
+          <div style="display:flex;gap:10px;">
+            <button id="add-ai-btn" style="flex:1;">Add AI Player</button>
+            <button id="remove-ai-btn" style="flex:1;" disabled>Remove AI Player</button>
           </div>
+        </div>
 
           <div class="controls-buttons">
             <div class="undo-redo-buttons"><button id="undo-btn" disabled>Undo</button><button id="redo-btn" disabled>Redo</button></div>

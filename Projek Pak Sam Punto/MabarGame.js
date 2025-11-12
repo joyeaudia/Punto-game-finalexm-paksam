@@ -22,6 +22,7 @@ let socket = null;
 let roomCode = null;
 let isHost = false;
 let myPlayerIndex = 1; // default (host starts as Player 1)
+let lastId = null;
 
 // === Read room code from URL (e.g., ?room=123456) ===
 const urlParams = new URLSearchParams(window.location.search);
@@ -36,6 +37,7 @@ if (providedRoomCode) {
   console.log(isHost ? "🏠 Hosting room:" : "🎮 Joining existing room:", roomCode);
 } else {
   console.log("🆕 No room provided — will create one manually");
+  gameState.players = [];
 }
 
 function generateRoomCode() {
@@ -63,43 +65,43 @@ function connectSocket() {
       console.warn("⚠️ No room code found in URL!");
     }
   });
-  
+    
   socket.on("roomJoined", ({ code, playerId, playerIndex }) => {
     roomCode = code;
-    myPlayerIndex = playerIndex;
-    localStorage.setItem("lastRoomCode", code);
 
-    // Update both the new button and the old div
+    myPlayerIndex = playerIndex; // directly use the server-assigned index
+
+    localStorage.setItem("lastRoomCode", code);
     updateRoomInfoButton(code);
     const infoDiv = document.getElementById("room-info");
-    if (infoDiv) {
-      // infoDiv.textContent = `Room: ${code} | You are Player ${playerIndex}`;
-      infoDiv.textContent = `You are Player ${playerIndex}`;
-    }
+    if (infoDiv) infoDiv.textContent = `You are Player ${myPlayerIndex}`;
   });
 
-
   socket.on("playerJoined", ({ playerIndex }) => {
-    if (isHost) {
-      // Add new player slot (if less than 4)
-      if (playerIndex <= 4 && !gameState.players[playerIndex - 1]) {
-        const colors = ["red", "blue", "yellow", "green"];
-        gameState.players.push({
-          id: playerIndex,
-          name: `Player ${playerIndex}`,
-          color: colors[playerIndex - 1],
-          cards: [],
-          deck: [],
-          isCurrent: false,
-        });
-        initializePlayerCards();
-        updatePlayerCardsDisplay(gameState.players[playerIndex - 1]);
-        updateCurrentPlayerDisplay();
-      }
+    if (!isHost) return; // only host adds new player
 
-      // Sync full state to everyone
-      socket.emit("stateUpdate", { room: roomCode, state: gameState });
-    }
+    // find next available slot
+    const usedIds = gameState.players.map(p => p.id);
+    const nextId = getNextAvailablePlayerId();
+    if (!nextId) return alert("Max 4 players reached");
+
+
+    const colors = ["red", "blue", "yellow", "green"];
+    const newPlayer = {
+      id: nextId,
+      name: `Player ${nextId}`,
+      color: colors[nextId-1],
+      cards: [],
+      deck: [],
+      isCurrent: false
+    };
+
+    gameState.players.push(newPlayer);
+    initializePlayerCards();
+    updatePlayerCardsDisplay(newPlayer);
+    updateCurrentPlayerDisplay();
+
+    broadcastGameState();
   });
 
   socket.on("stateUpdate", (remoteState) => {
@@ -114,12 +116,57 @@ function connectSocket() {
     updateCurrentPlayerDisplay();
     showSelectedCardFromState();
 
+    triggerAITurn();
+
     const current = gameState.players[gameState.currentPlayerIndex];
     if (myPlayerIndex === current.id)
       gameMessage.textContent = `Your turn (${current.name})`;
     else
       gameMessage.textContent = `${current.name}'s turn`;
   });
+}
+
+
+// Example: room object
+const room = {
+  players: []  // array of player objects { id: 'player1', type: 'human' | 'ai', name: '...' }
+};
+
+// When host creates room
+function createRoom(hostName) {
+  const hostPlayer = { id: 'player1', type: 'human', name: hostName };
+  room.players.push(hostPlayer);
+  console.log('Host set as player1', room.players);
+}
+
+// When someone joins
+function joinRoom(playerName, playerType = 'human') {
+  // Find the next available player number
+  let nextNumber = 2; // start from 2 because host is player1
+  const existingIds = room.players.map(p => p.id); // ['player1', 'player2', ...]
+
+  while (existingIds.includes('player' + nextNumber)) {
+    nextNumber++;
+  }
+
+  const newPlayer = {
+    id: 'player' + nextNumber,
+    type: playerType,
+    name: playerName
+  };
+
+  room.players.push(newPlayer);
+  console.log(`${playerName} joined as ${newPlayer.id}`, room.players);
+}
+
+function getNextAvailablePlayerId() {
+  const usedIds = gameState.players.map(p => p.id) // human & AI players
+    .concat(Object.keys(aiPlayers).filter(id => aiPlayers[id]).map(Number));
+  
+  for (let i = 1; i <= 4; i++) {
+    if (!usedIds.includes(i)) return i;
+  }
+  return null; // max players reached
 }
 
 
@@ -153,6 +200,18 @@ if (createRoomBtn) {
     if (!socket) connectSocket();
     const code = generateRoomCode();
     isHost = true;
+
+    // reset players for new room
+    gameState.players = [{
+      id: 1,
+      name: 'Player 1',
+      color: 'red',
+      cards: [],
+      deck: [],
+      isCurrent: true
+    }];
+    myPlayerIndex = 1;
+
     socket.emit("createRoom", code);
     document.getElementById("room-info").textContent = "Creating room...";
     startRestartGame();
@@ -169,13 +228,108 @@ if (joinRoomBtn) {
   });
 }
 
-
-// AI toggles
+// === AI Player Management (Add / Remove buttons) ===
 const aiPlayers = {1:false,2:false,3:false,4:false};
-document.getElementById('ai-p1').addEventListener('change', e=>aiPlayers[1]=e.target.checked);
-document.getElementById('ai-p2').addEventListener('change', e=>aiPlayers[2]=e.target.checked);
-document.getElementById('ai-p3').addEventListener('change', e=>aiPlayers[3]=e.target.checked);
-document.getElementById('ai-p4').addEventListener('change', e=>aiPlayers[4]=e.target.checked);
+const addAiBtn = document.getElementById("add-ai-btn");
+const removeAiBtn = document.getElementById("remove-ai-btn");
+const aiStatus = document.getElementById("ai-status");
+
+function updateAiStatus() {
+  const active = Object.entries(aiPlayers)
+    .filter(([_, v]) => v)
+    .map(([id]) => `Player ${id} (AI)`);
+  aiStatus.textContent = active.length
+    ? `AI active: ${active.join(", ")}`
+    : "No AI players added.";
+}
+
+function removeAI(id){
+  // clear AI map
+  aiPlayers[id] = false;
+
+  // remove from players array
+  const idx = gameState.players.findIndex(p => p.id === id);
+  if (idx !== -1) gameState.players.splice(idx, 1);
+
+  // remove cards UI
+  const cardsEl = document.getElementById(`player${id}-cards`);
+  if (cardsEl) cardsEl.innerHTML = '';
+
+  // remove player highlight/display
+  const playerEl = document.getElementById(`player${id}`);
+  if (playerEl) playerEl.classList.remove('current-player');
+
+  updatePlayerHighlights();
+  updateAiStatus();
+  updateAiButtons();
+
+  broadcastGameState();
+}
+
+
+// Add AI player (up to 4)
+addAiBtn.addEventListener("click", () => {
+  if (!isHost) {
+    alert("Only the host can add AI players.");
+    return;
+  }
+
+  const humanCount = gameState.players.filter(p => !aiPlayers[p.id]).length;
+  let nextId = null;
+  for (let i = 1; i <= 4; i++) {
+    if (!gameState.players.some(p => p.id === i)) {
+      nextId = i;
+      break;
+    }
+  }
+  if (!nextId) { alert("Max 4 players"); return; }
+
+
+  const colors = ["red", "blue", "yellow", "green"];
+  const newPlayer = {
+    id: nextId,
+    name: `Player ${nextId} (AI)`,
+    color: colors[nextId - 1],
+    cards: [],
+    deck: [],
+    isCurrent: false,
+  };
+
+  // After adding AI
+  aiPlayers[nextId] = true;
+  gameState.players.push(newPlayer);
+  initializePlayerCards();
+  updatePlayerCardsDisplay(newPlayer);
+  updateCurrentPlayerDisplay();
+  updateAiStatus();
+  updateAiButtons();
+  gameMessage.textContent = `${newPlayer.name} added.`;
+
+  // After removing AI
+  aiPlayers[lastId] = false;
+  const index = gameState.players.findIndex(p => p.id === lastId);
+  if (index !== -1) gameState.players.splice(index, 1);
+  updatePlayerHighlights();
+  updateAiStatus();
+  updateAiButtons();
+  gameMessage.textContent = `AI Player ${lastId} removed.`;
+
+  // Broadcast the new player state to all clients
+  broadcastGameState();
+});
+
+// Remove last AI player
+removeAiBtn.addEventListener("click", () => {
+  if (!isHost) return alert("Only host can remove AI");
+  const aiIds = Object.keys(aiPlayers).filter(id => aiPlayers[id]).map(Number);
+  if (aiIds.length === 0) return alert("No AI players to remove");
+  const lastId = aiIds[aiIds.length-1];
+  removeAI(lastId);
+  gameMessage.textContent = `AI Player ${lastId} removed.`;
+});
+
+// Initialize display
+updateAiStatus();
 
 // DOM refs
 const gameBoard = document.getElementById('game-board');
@@ -477,7 +631,6 @@ function redoMove(){
 
   gameMessage.textContent = "Move redone";
   updateUndoRedoButtons();
-
 }
 
 function updateUndoRedoButtons(){
@@ -485,29 +638,41 @@ function updateUndoRedoButtons(){
   redoBtn.disabled = gameState.futureMoves.length===0 || gameState.gameOver;
 }
 
+function updateAiButtons() {
+  const addAIButton = document.getElementById('add-ai-btn');
+  const removeAIButton = document.getElementById('remove-ai-btn');
+
+  // Enable Remove AI only if at least 1 AI exists
+  const hasAI = Object.values(aiPlayers).some(v => v);
+  removeAIButton.disabled = !hasAI;
+
+  // Enable Add AI only if total players < 4
+  addAIButton.disabled = gameState.players.length >= 4;
+}
+
+
 // -------- Selection & placement --------
 function handleCardSelect(playerId, cardIndex) {
-  if (!gameState.gameStarted || gameState.gameOver) return;
-
-  // 🧠 Only allow selecting your own cards on your turn
   const current = gameState.players[gameState.currentPlayerIndex];
-  if (myPlayerIndex !== current.id) return; // Not your turn
+
+  // human restriction: only block clicks from humans who are not current
+  if (!aiPlayers[current.id] && myPlayerIndex !== current.id) return;
 
   const player = gameState.players.find(p => p.id === playerId);
   if (!player.isCurrent) return;
-  if (gameState.selectedCard){
-    const prev = document.querySelectorAll(`#player${gameState.selectedCard.playerId}-cards .player-card`);
-    if (prev[gameState.selectedCard.cardIndex]) prev[gameState.selectedCard.cardIndex].classList.remove('selected');
-  }
+
   gameState.selectedCard = { playerId, cardIndex };
   const curCards = document.querySelectorAll(`#player${playerId}-cards .player-card`);
   if (curCards[cardIndex]) curCards[cardIndex].classList.add('selected');
   const card = player.cards[cardIndex];
-  // tampilkan preview, pass ownerId supaya player1 pakai gambar khusus
   showSelectedCardPreview(card, playerId);
-  if (gameState.firstMove) gameMessage.textContent = `Selected: ${card.color} ${card.value}. Place at center (4,4).`;
-  else gameMessage.textContent = `Selected: ${card.color} ${card.value}. Choose a valid board position.`;
+
+  if (gameState.firstMove) 
+      gameMessage.textContent = `Selected: ${card.color} ${card.value}. Place at center (4,4).`;
+  else 
+      gameMessage.textContent = `Selected: ${card.color} ${card.value}. Choose a valid board position.`;
 }
+
 
 
 function isValidMove(row,col,card){
@@ -725,21 +890,34 @@ function hasValidMoves(){
 }
 
 // -------- Next player & AI trigger --------
-function nextPlayer(){
-  gameState.players[gameState.currentPlayerIndex].isCurrent = false;
-  gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-  gameState.players[gameState.currentPlayerIndex].isCurrent = true;
-  updatePlayerHighlights();
-  updateCurrentPlayerDisplay();
-  gameMessage.textContent = `${gameState.players[gameState.currentPlayerIndex].name}'s turn. Select a card.`;
-  if (gameState.players[gameState.currentPlayerIndex].cards.length===0){
-    nextPlayer();
-    return;
-  }
-  const cur = gameState.players[gameState.currentPlayerIndex];
-  if (aiPlayers[cur.id] && !gameState.gameOver){
-    setTimeout(()=> computerMove(cur), 280);
-  }
+function nextPlayer() {
+    const prev = gameState.players[gameState.currentPlayerIndex];
+    prev.isCurrent = false;
+
+    // Move to next player
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    const cur = gameState.players[gameState.currentPlayerIndex];
+    cur.isCurrent = true;
+
+    updatePlayerHighlights();
+    updateCurrentPlayerDisplay();
+
+    console.log("➡️ Next player:", cur.name, "ID:", cur.id);
+
+    // If player has no cards, skip turn
+    if (cur.cards.length === 0) {
+        gameMessage.textContent = `${cur.name} has no cards. Turn skipped.`;
+        setTimeout(nextPlayer, 250); // short delay for UX
+        return;
+    }
+
+    gameMessage.textContent = `${cur.name}'s turn. Select a card.`;
+
+    // ✅ Only host runs AI moves
+    if (isHost && aiPlayers[cur.id] && !gameState.gameOver) {
+        console.log("🤖 AI is taking turn for:", cur.name);
+        setTimeout(() => computerMove(cur), 300);
+    }
 }
 
 // -------- AI (heuristic) --------
@@ -835,6 +1013,15 @@ function evaluateMove(row,col,card,player){
   return score;
 }
 
+function triggerAITurn() {
+    const current = gameState.players[gameState.currentPlayerIndex];
+    if (isHost && aiPlayers[current.id] && !gameState.gameOver) {
+        console.log("🤖 AI turn triggered:", current.name);
+        setTimeout(() => computerMove(current), 300);
+    }
+}
+
+
 function computerMove(player){
   if (!player || player.cards.length===0 || gameState.gameOver) return;
   let best = {score:-Infinity, row:null, col:null, cardIndex:null};
@@ -856,6 +1043,10 @@ function computerMove(player){
   } else {
     gameMessage.textContent = `${player.name} (AI) has no valid move and is skipped.`;
     nextPlayer();
+  }
+
+  if (socket && roomCode && isHost){
+    broadcastGameState();
   }
 }
 
@@ -890,33 +1081,6 @@ function startRestartGame(){
   broadcastGameState();
 
 }
-
-// -------- Quick Play vs Computer logic (button handlers) --------
-startPvcBtn.addEventListener('click', ()=>{
-  // Quick mode: Player 1 = human, Player 2 = AI; others remain human (unless checkboxes used)
-  aiPlayers[1] = false;
-  aiPlayers[2] = true;
-  aiPlayers[3] = false;
-  aiPlayers[4] = false;
-  // sync the checkboxes UI
-  document.getElementById('ai-p1').checked = false;
-  document.getElementById('ai-p2').checked = true;
-  document.getElementById('ai-p3').checked = false;
-  document.getElementById('ai-p4').checked = false;
-  gameMessage.textContent = "Mode: Player 1 vs Computer (Player 2). Starting game...";
-  startRestartGame();
-});
-
-stopPvcBtn.addEventListener('click', ()=>{
-  // Turn off all quick AI flags (but keep any manually checked ones off too)
-  aiPlayers[1] = false; aiPlayers[2] = false; aiPlayers[3] = false; aiPlayers[4] = false;
-  document.getElementById('ai-p1').checked = false;
-  document.getElementById('ai-p2').checked = false;
-  document.getElementById('ai-p3').checked = false;
-  document.getElementById('ai-p4').checked = false;
-  gameMessage.textContent = "AI mode stopped. All players set to human. Resetting game...";
-  startRestartGame();
-});
 
 // -------- Event listeners & init --------
 startRestartGameBtn.addEventListener('click', startRestartGame);

@@ -371,7 +371,12 @@ body::after {
   align-items: center;
   flex-direction: column; */
 
-  height: 100vh; /* full height of viewport */
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(54px, -420px) !important;
+
+  height: 95vh; /* full height of viewport */
   transform: translate(54px, -420px) !important;
   transition: transform 0.22s ease;
   max-width: 300px;
@@ -384,7 +389,7 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   padding: 16px;
-  margin: 30px 0px;
+  margin: 350px 0px;
 }
 
 /* BUTTONS (omitted repetition) - keep as before */

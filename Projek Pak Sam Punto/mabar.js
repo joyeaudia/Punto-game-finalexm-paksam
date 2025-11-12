@@ -244,18 +244,8 @@ if (copyCodeBtn && inviteCodeEl) {
   // invite -> go to room
   // Host: when user clicks "Lanjut ke Room"
   if (inviteGoRoomBtn && inviteCodeEl) {
-    inviteGoRoomBtn.addEventListener("click", async () => {
+    inviteGoRoomBtn.addEventListener("click", () => {
       const code = inviteCodeEl.textContent.trim();
-      const gameLink = `${window.location.origin}/MabarGame.html?room=${encodeURIComponent(code)}`;
-      try {
-        await copyText(gameLink);
-        showToast("Link disalin! Kirim ke temanmu 😉");
-      } catch (err) {
-        console.warn("Gagal menyalin link:", err);
-        showToast("Gagal menyalin, salin manual.");
-      }
-
-      // 👇 Go to room as host (adds &host=1)
       gotoRoomWithCode(code, true);
     });
   }
