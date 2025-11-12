@@ -366,6 +366,12 @@ body::after {
 }
 
 .controls .controls-panel {
+  /* display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; */
+
+  height: 100vh; /* full height of viewport */
   transform: translate(54px, -420px) !important;
   transition: transform 0.22s ease;
   max-width: 300px;
@@ -378,6 +384,7 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   padding: 16px;
+  margin: 30px 0px;
 }
 
 /* BUTTONS (omitted repetition) - keep as before */
@@ -534,6 +541,53 @@ html, body {
   text-shadow: 0 0 3px rgba(255,90,120,0.45);
   z-index: 10;
 }
+
+/* Multiplayer Room Button */
+.room-info-btn {
+  margin-top: 15px;
+  background: rgba(255, 140, 160, 0.25);
+  border: 1px solid rgba(255, 110, 150, 0.75);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 80;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.35s ease;
+  box-shadow:
+    0 0 8px rgba(255, 110, 150, 0.35),
+    0 0 16px rgba(255, 120, 160, 0.25),
+    inset 0 0 6px rgba(255, 180, 200, 0.2);
+
+  color: #764d56;
+  font-size: 0.85rem;
+  letter-spacing: .4px;
+  /* text-transform: uppercase; */
+  font-weight: 900;
+  /* background: linear-gradient(90deg,#a44063,#000000); */
+  /* -webkit-background-clip: text; */
+  /* background-clip: text; */
+  /* color: transparent; */
+}
+.room-info-btn:hover {
+  background: rgba(255, 140, 160, 0.35);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 0 12px rgba(255, 120, 160, 0.55),
+    0 0 30px rgba(255, 140, 180, 0.45),
+    inset 0 0 8px rgba(255, 180, 200, 0.25);
+}
+
+.room-info-btn:active { transform: scale(0.96); }
+
+#room-info {
+  margin: 0 8px 0px;
+  font-size: 0.95rem;
+  letter-spacing: .4px;
+  font-weight: 500;
+}
+
 
 /* ===== Custom cursor (PNG) ===== */
 html.custom-cursor-active, body.custom-cursor-active { cursor: none !important; }

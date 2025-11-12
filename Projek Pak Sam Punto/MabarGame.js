@@ -64,13 +64,20 @@ function connectSocket() {
     }
   });
   
-    socket.on("roomJoined", ({ code, playerId, playerIndex }) => {
+  socket.on("roomJoined", ({ code, playerId, playerIndex }) => {
     roomCode = code;
     myPlayerIndex = playerIndex;
     localStorage.setItem("lastRoomCode", code);
-    document.getElementById("room-info").textContent =
-      `Room: ${code} | You are Player ${playerIndex}`;
+
+    // Update both the new button and the old div
+    updateRoomInfoButton(code);
+    const infoDiv = document.getElementById("room-info");
+    if (infoDiv) {
+      // infoDiv.textContent = `Room: ${code} | You are Player ${playerIndex}`;
+      infoDiv.textContent = `You are Player ${playerIndex}`;
+    }
   });
+
 
   socket.on("playerJoined", ({ playerIndex }) => {
     if (isHost) {
@@ -119,24 +126,48 @@ function connectSocket() {
 const createRoomBtn = document.getElementById("create-room-btn");
 const joinRoomBtn = document.getElementById("join-room-btn");
 const roomCodeInput = document.getElementById("room-code-input");
+const roomInfoBtn = document.getElementById("room-info-btn");
 
-createRoomBtn.addEventListener("click", () => {
-  if (!socket) connectSocket();
-  const code = generateRoomCode();
-  isHost = true;
-  socket.emit("createRoom", code);
-  document.getElementById("room-info").textContent = "Creating room...";
-  isHost = true;
-  startRestartGame();
-});
+function updateRoomInfoButton(code) {
+  if (!roomInfoBtn) return;
+  roomInfoBtn.textContent = `Room: ${code}`;
+}
 
-joinRoomBtn.addEventListener("click", () => {
-  const code = roomCodeInput.value.trim().toUpperCase();
-  if (!code) return alert("Enter a valid room code");
-  if (!socket) connectSocket();
-  socket.emit("joinRoom", code);
-  document.getElementById("room-info").textContent = "Joining room...";
-});
+if (roomInfoBtn) {
+  roomInfoBtn.addEventListener("click", () => {
+    if (!roomCode) return;
+    navigator.clipboard.writeText(roomCode)
+      .then(() => {
+        console.log("📋 Room code copied:", roomCode);
+        roomInfoBtn.textContent = `✅ Copied! (${roomCode})`;
+        setTimeout(() => updateRoomInfoButton(roomCode), 1200);
+      })
+      .catch(() => {
+        window.prompt("Copy this room code manually:", roomCode);
+      });
+  });
+}
+
+if (createRoomBtn) {
+  createRoomBtn.addEventListener("click", () => {
+    if (!socket) connectSocket();
+    const code = generateRoomCode();
+    isHost = true;
+    socket.emit("createRoom", code);
+    document.getElementById("room-info").textContent = "Creating room...";
+    startRestartGame();
+  });
+}
+
+if (joinRoomBtn) {
+  joinRoomBtn.addEventListener("click", () => {
+    const code = roomCodeInput.value.trim().toUpperCase();
+    if (!code) return alert("Enter a valid room code");
+    if (!socket) connectSocket();
+    socket.emit("joinRoom", code);
+    document.getElementById("room-info").textContent = "Joining room...";
+  });
+}
 
 
 // AI toggles

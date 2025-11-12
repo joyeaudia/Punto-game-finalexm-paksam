@@ -55,15 +55,19 @@
         </div>
 
         <!-- NEW: controls panel (semua yang mau dipindahkan) -->
-        <div class="controls-panel">
+        <div class="controls-panel">  
           <div class="multiplayer-block">
-          <h3>Multiplayer</h3>
-          <button id="create-room-btn">Create Room</button>
-          <input id="room-code-input" placeholder="Enter room code" />
-          <button id="join-room-btn">Join Room</button>
-          <div id="room-info"></div>
-        </div>
+            <h3>Multiplayer</h3>
+              <div id="room-info" style="padding-top: 10px;"></div>
+              <button id="room-info-btn" class="room-info-btn" title="Click to copy room code">
+                Room: ------
+              </button>
+            <!-- <button id="create-room-btn">Create Room</button> -->
+            <!-- <input id="room-code-input" placeholder="Enter room code" /> -->
+            <!-- <button id="join-room-btn">Join Room</button> -->
 
+          </div>
+          
           <div class="selected-card-block">
             <h3>Selected Card</h3>
             <!-- kosongkan biar placeholder CSS ::before jalan -->
@@ -73,7 +77,7 @@
           <div class="status-block">
             <h3>Game Status</h3>
             <div id="current-player">Player 1's Turn</div>
-            <div id="game-message"></div> 
+            <div id="game-message" style="margin-top: 10px;"></div> 
           </div>
 
           <div class="ai-controls">

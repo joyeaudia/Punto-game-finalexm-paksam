@@ -217,17 +217,29 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // copy code
-  if (copyCodeBtn && inviteCodeEl) {
-    copyCodeBtn.addEventListener("click", async () => {
-      const code = inviteCodeEl.textContent.trim();
-      try {
-        await copyText(code);
-        showToast("Kode disalin ke clipboard!");
-      } catch (err) {
-        showToast("Gagal menyalin, salin manual.");
-      }
-    });
-  }
+if (copyCodeBtn && inviteCodeEl) {
+  copyCodeBtn.addEventListener("click", () => {
+    const code = inviteCodeEl.textContent.trim();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          showToast("Kode disalin ke clipboard!");
+        })
+        .catch(err => {
+          console.warn("Clipboard write failed:", err);
+          // fallback
+          window.prompt("Salin kode undangan ini:", code);
+          showToast("Gagal menyalin otomatis. Salin manual ya!");
+        });
+    } else {
+      // fallback for old browsers
+      window.prompt("Salin kode undangan ini:", code);
+      showToast("Disalin manual.");
+    }
+  });
+}
+
 
   // invite -> go to room
   // Host: when user clicks "Lanjut ke Room"
