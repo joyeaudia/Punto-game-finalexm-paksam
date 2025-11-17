@@ -41,7 +41,7 @@ function cancelAiTimerFor(playerId){
 }
 
 // ===== AI timing configuration (tweak these) =====
-const AI_THINK_MIN_MS = 800;   // min delay for AI thinking (ms)
+const AI_THINK_MIN_MS = 500;   // min delay for AI thinking (ms)
 const AI_THINK_MAX_MS = 1850;  // max delay for AI thinking (ms)
 const AI_SKIP_DELAY_MS = 450;  // delay when AI has no valid move (ms)
 const NEXTPLAYER_UI_DELAY_MS = 120; // micro-delay before AI starts after UI update
